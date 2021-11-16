@@ -3,10 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Core;
-import DAO.IDAO;
-import DAO.UserDAO;
-import Entity.User;
+package core;
+import flag.ActionFlags;
+import flag.ResultFlags;
+import dao.IDAO;
+import dao.UserDAO;
+import entity.User;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;

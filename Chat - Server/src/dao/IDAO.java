@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package DAO;
+package dao;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -22,9 +22,8 @@ public abstract class IDAO<T> {
     ResultSet rs;
     
     public abstract T[] selectAll();
-    public abstract T[] selectById(int id);
+    public abstract T selectById(int id);
     public abstract int insert(T object);
-    public abstract int update(T object);
     public abstract void closeConnection();
     
 }
