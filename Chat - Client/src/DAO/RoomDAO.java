@@ -10,6 +10,7 @@ import Entity.Room;
 import Entity.UserRoom;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,7 +65,7 @@ public class RoomDAO extends IDAO<Room> {
         String sql = "INSERT INTO ROOM (DESCRIPTION)"
                 + "VALUES (?)";
         try {
-            this.preStatement = this.conn.prepareStatement(sql);
+            this.preStatement = this.conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             this.preStatement.setString(1, room.getDescription());
             int check = this.preStatement.executeUpdate();
             return check;
