@@ -5,12 +5,25 @@
  */
 package Interface;
 
+import Core.ActionFlags;
+import Core.Client;
+import Core.Result;
+import Core.ResultFlags;
+import Entity.User;
+import java.io.UnsupportedEncodingException;
+import java.net.UnknownHostException;
+import java.util.Observable;
+import java.util.Observer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JOptionPane;
+
 /**
  *
- * @author Manh
+ * @author Ngoc
  */
-public class RegisterForm extends javax.swing.JFrame {
-
+public class RegisterForm extends javax.swing.JFrame implements Observer{
+    Client client;
     /**
      * Creates new form RegisterForm
      */
@@ -36,8 +49,10 @@ public class RegisterForm extends javax.swing.JFrame {
         txtPassConfirm = new javax.swing.JPasswordField();
         btnSignup = new javax.swing.JButton();
         btnBackToLogin = new javax.swing.JButton();
+        jLabel5 = new javax.swing.JLabel();
+        txtDisplayName = new javax.swing.JTextField();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
 
         jLabel2.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
         jLabel2.setText("Register");
@@ -55,8 +70,26 @@ public class RegisterForm extends javax.swing.JFrame {
         jLabel4.setText("confirm password");
 
         btnSignup.setText("Sign up");
+        btnSignup.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSignupActionPerformed(evt);
+            }
+        });
 
         btnBackToLogin.setText("Back to login");
+        btnBackToLogin.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnBackToLoginActionPerformed(evt);
+            }
+        });
+
+        jLabel5.setText("Display Name");
+
+        txtDisplayName.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtDisplayNameActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -68,53 +101,120 @@ public class RegisterForm extends javax.swing.JFrame {
                         .addGap(185, 185, 185)
                         .addComponent(jLabel2))
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(41, 41, 41)
+                        .addGap(44, 44, 44)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel4))
+                            .addComponent(jLabel4)
+                            .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(62, 62, 62)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(txtUsername)
-                            .addComponent(txtPassword)
-                            .addComponent(txtPassConfirm, javax.swing.GroupLayout.DEFAULT_SIZE, 192, Short.MAX_VALUE)))
+                            .addComponent(txtDisplayName, javax.swing.GroupLayout.DEFAULT_SIZE, 192, Short.MAX_VALUE)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                .addComponent(txtUsername)
+                                .addComponent(txtPassword)
+                                .addComponent(txtPassConfirm, javax.swing.GroupLayout.DEFAULT_SIZE, 192, Short.MAX_VALUE))))
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(109, 109, 109)
+                        .addGap(103, 103, 103)
                         .addComponent(btnSignup)
                         .addGap(53, 53, 53)
                         .addComponent(btnBackToLogin)))
-                .addContainerGap(59, Short.MAX_VALUE))
+                .addContainerGap(56, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(35, 35, 35)
                 .addComponent(jLabel2)
-                .addGap(35, 35, 35)
+                .addGap(30, 30, 30)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(txtUsername, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(36, 36, 36)
+                    .addComponent(jLabel5)
+                    .addComponent(txtDisplayName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(33, 33, 33)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
-                    .addComponent(txtPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(37, 37, 37)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4)
-                    .addComponent(txtPassConfirm, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(51, 51, 51)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnSignup)
-                    .addComponent(btnBackToLogin))
-                .addContainerGap(54, Short.MAX_VALUE))
+                    .addComponent(txtUsername, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel1))
+                .addGap(34, 34, 34)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(txtPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(30, 30, 30)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtPassConfirm, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel4))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 33, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(btnSignup)
+                            .addComponent(btnBackToLogin))
+                        .addGap(33, 33, 33))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel3)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    
+    @Override
+    public void update(Observable o, Object arg) {
+        Result result = (Result)arg;
+        if(result.resultFlags.equals(ResultFlags.ERROR))
+        {
+            JOptionPane.showMessageDialog(null, result.content, "Có lỗi xảy ra trong quá trình đăng ký", JOptionPane.ERROR_MESSAGE);
+        }else if(result.actionFlags.equals(ActionFlags.REGISTER))
+        {
+            
+            JOptionPane.showMessageDialog(rootPane, "Đăng ký thành công");
+            LoginForm lg = new LoginForm();
+            lg.setVisible(true);
+            this.setVisible(false);
+        }
+    }
+    
     private void txtUsernameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtUsernameActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txtUsernameActionPerformed
+
+    private void btnSignupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSignupActionPerformed
+        // TODO add your handling code here:
+        String username = txtUsername.getText();
+        String password = txtPassword.getText();
+        String confirmation = txtPassConfirm.getText();
+        String displayName = txtDisplayName.getText();
+        if(password.equals(confirmation) == false){
+            JOptionPane.showMessageDialog(rootPane, "Mật khẩu không trùng!");
+        }
+        else if(username.equals("") == true || password.equals("") == true || displayName.equals("")){
+            JOptionPane.showMessageDialog(rootPane, "Không được để trống");
+        }
+        else{
+            User user = new User(1, username, password, displayName);
+            try {
+                client = new Client(this, "localhost");
+                if (client.startConnect()){
+                    try {
+                        client.register(user);
+                    } catch (UnsupportedEncodingException ex) {
+                        Logger.getLogger(RegisterForm.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            } catch (UnknownHostException ex) {
+                Logger.getLogger(RegisterForm.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }//GEN-LAST:event_btnSignupActionPerformed
+
+    private void txtDisplayNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtDisplayNameActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtDisplayNameActionPerformed
+
+    private void btnBackToLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBackToLoginActionPerformed
+        // TODO add your handling code here:
+        LoginForm lg = new LoginForm();
+        lg.setVisible(true);
+        this.setVisible(false);
+    }//GEN-LAST:event_btnBackToLoginActionPerformed
 
     /**
      * @param args the command line arguments
@@ -158,6 +258,8 @@ public class RegisterForm extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JTextField txtDisplayName;
     private javax.swing.JPasswordField txtPassConfirm;
     private javax.swing.JPasswordField txtPassword;
     private javax.swing.JTextField txtUsername;

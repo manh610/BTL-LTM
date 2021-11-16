@@ -4,9 +4,14 @@
  * and open the template in the editor.
  */
 package Core;
+import DAO.IDAO;
+import DAO.UserDAO;
+import Entity.User;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Observable;
@@ -21,11 +26,15 @@ import java.util.Random;
 public class Server extends Observable
 {
     int port = 11000;
+    private static String DB_URL = "jdbc:mysql://localhost:3306/btl_ltm";
+    private static String USER_NAME = "root";
+    private static String PASSWORD = "123456";
     ServerSocket serverSocket;
     Thread threadAccept, threadProcess;
     ArrayList<UserActions> listUser = new ArrayList<>();
     ArrayList<RoomManagement> listRoom = new ArrayList<>();
     ArrayList<UserActions> listUserWaitLogout = new ArrayList<>();
+    UserDAO userDAO;
     public Server(Observer obs)  
     {
         this.addObserver(obs);
@@ -33,7 +42,7 @@ public class Server extends Observable
     public Server(ServerSocket serverSocket, Observer obs)   
     {
         this.addObserver(obs);
-        serverSocket = serverSocket;
+        this.serverSocket = serverSocket;
     }
     
     public void dispose() throws IOException
@@ -46,7 +55,7 @@ public class Server extends Observable
         }
     }
     
-    public boolean startServer() 
+    public boolean startServer() throws SQLException 
             
     {
         try 
@@ -55,6 +64,7 @@ public class Server extends Observable
             startThreadAccept();
             startThreadProcess();
             notifyObservers("Khởi động server thành công");
+            userDAO = new UserDAO(DriverManager.getConnection(DB_URL, USER_NAME, PASSWORD));
             return true;
         } catch (IOException ex) 
         {
@@ -172,16 +182,33 @@ public class Server extends Observable
         {
             case ActionFlags.LOGIN:
             {
-                String nickName = lines[1];  
-                if(checkNickName(nickName))
+                String username = lines[1];
+                String password = lines[2];
+                System.out.println(username + password);
+                if(checkUser(username, password))
                 {
-                    user.nickName = nickName;
+                    user.nickName = username;
                     user.logined = true;
                     user.send(actionType, ResultFlags.OK, "OK");
                     notifyObservers(user.nickName + " vừa đăng nhập thành công");
                 }else
                 {
-                    user.send(actionType, ResultFlags.ERROR, "Nickname đã được người khác sử dụng");
+                    user.send(actionType, ResultFlags.ERROR, "Không tồn tại tài khoản này!");
+                }
+                break;
+            }
+            case ActionFlags.REGISTER:
+            {
+                String username = lines[1];
+                String password = lines[2];
+                String displayName = lines[3];
+                if(checkRegister(username, password, displayName))
+                {
+                    user.send(actionType, ResultFlags.OK, "OK");
+                    notifyObservers(username + " vừa đăng ký thành công");
+                }else
+                {
+                    user.send(actionType, ResultFlags.ERROR, "Trùng tài khoản hoặc chứa ký tự không thể xử lý!");
                 }
                 break;
             }
@@ -307,13 +334,23 @@ public class Server extends Observable
         }
     }
     
-    boolean checkNickName(String nickName)
+    boolean checkUser(String nickName, String password)
     {
-        int size = listUser.size();
-        for (int i = 0; i < size; i++) 
-        {
-            if(nickName.equals(listUser.get(i).nickName))  
-                return false;
+        boolean flag = userDAO.checkLogin(nickName, password);
+        if(flag == false)  
+            return false;
+        return true;
+    }
+    
+    boolean checkRegister(String username, String password, String displayName){
+        boolean checkReg = userDAO.checkRegister(username);
+        if (checkReg == false){
+            return false;
+        }
+        User user = new User(1, username, password, displayName);
+        int flag = userDAO.insert(user);
+        if(flag==0){
+            return false;
         }
         return true;
     }
