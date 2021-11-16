@@ -1,5 +1,6 @@
 
 package Core;
+import Entity.User;
 import Interface.LoginForm;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
@@ -126,9 +127,22 @@ public class Client extends Observable{
             notifyObservers(result);
         }
     }
-    public void login(String nickName) throws UnsupportedEncodingException  
+    public void login(String nickName, String password) throws UnsupportedEncodingException  
     {
-        String line = ActionFlags.LOGIN + ";" + nickName;
+        String line = ActionFlags.LOGIN + ";" + nickName + ";" + password;
+        try
+        {
+            bufferWriter.write(line + "\n");
+            bufferWriter.flush();
+        } catch (IOException ex) {
+            Result result = new Result("", ResultFlags.ERROR, "Không thể kết nối tới server");
+            notifyObservers(result);
+        }
+    }
+    
+    public void register(User user) throws UnsupportedEncodingException  
+    {
+        String line = ActionFlags.REGISTER + ";" + user.getUsername() + ";" + user.getPassword() + ";" + user.getDisplayName();
         try
         {
             bufferWriter.write(line + "\n");

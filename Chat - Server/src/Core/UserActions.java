@@ -55,6 +55,7 @@ public class UserActions {
         try 
         {
             dataOutputStream.writeUTF(actionType + ";" + resultCode + ";" + content);
+            System.out.println(resultCode);
             return true;
         } catch (IOException ex) {
             Logger.getLogger(UserActions.class.getName()).log(Level.SEVERE, null, ex);

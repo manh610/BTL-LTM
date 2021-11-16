@@ -35,7 +35,7 @@ public class LoginForm extends javax.swing.JFrame implements Observer{
         btnRegister = new javax.swing.JButton();
         txtPassword = new javax.swing.JPasswordField();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Login");
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
@@ -129,6 +129,7 @@ public class LoginForm extends javax.swing.JFrame implements Observer{
             JOptionPane.showMessageDialog(null, result.content, "Thất bại", JOptionPane.ERROR_MESSAGE);
         }else if(result.actionFlags.equals(ActionFlags.LOGIN))
         {
+            JOptionPane.showMessageDialog(rootPane, "Đăng nhập thành công");
             mClientManager.nickname = txtPassword.getText().trim();
             mClientManager.deleteObserver(this);   
             RoomCenter listRoom = new RoomCenter(this, mClientManager);
@@ -139,8 +140,8 @@ public class LoginForm extends javax.swing.JFrame implements Observer{
     
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
         // TODO add your handling code here:
-        String nickName = txtPassword.getText().trim();
-        String ipAddress = txtUsername.getText().trim();
+        String password = txtPassword.getText().trim();
+        String nickName = txtUsername.getText().trim();
         if(nickName.length()==0)
         {
             JOptionPane.showMessageDialog(null, "Vui lòng nhập nick name", "Chưa nhập nick name", JOptionPane.WARNING_MESSAGE);
@@ -152,7 +153,7 @@ public class LoginForm extends javax.swing.JFrame implements Observer{
             mClientManager.dispose();
         }
         try {
-            mClientManager = new Client(this, ipAddress);
+            mClientManager = new Client(this, "localhost");
         } catch (UnknownHostException ex) {
             Logger.getLogger(LoginForm.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -161,7 +162,7 @@ public class LoginForm extends javax.swing.JFrame implements Observer{
             try 
             {
                 btnLogin.setEnabled(false);
-                mClientManager.login(nickName);
+                mClientManager.login(nickName, password);
             } catch (UnsupportedEncodingException ex) {
                 Logger.getLogger(LoginForm.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -180,6 +181,9 @@ public class LoginForm extends javax.swing.JFrame implements Observer{
 
     private void btnRegisterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegisterActionPerformed
         // TODO add your handling code here:
+        RegisterForm regi = new RegisterForm();
+        regi.setVisible(true);
+        this.setVisible(false);
     }//GEN-LAST:event_btnRegisterActionPerformed
 
     /**

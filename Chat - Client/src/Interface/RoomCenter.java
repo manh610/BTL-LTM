@@ -26,7 +26,7 @@ public class RoomCenter extends javax.swing.JFrame implements Observer{
     
     public void FillListRoom(Result result)
     {
-        DefaultTableModel dtm = (DefaultTableModel)tbRooms.getModel();
+        DefaultTableModel dtm = (DefaultTableModel)tbRooms.getModel(); 
         if(result.content.length()>0)
         {
             String[] rows = result.content.split("<row>");
