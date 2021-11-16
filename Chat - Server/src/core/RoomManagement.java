@@ -3,8 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Core;
+package core;
 
+import flag.ActionFlags;
+import flag.ResultFlags;
 import java.util.ArrayList;
 
 /**

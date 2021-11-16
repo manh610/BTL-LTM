@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package DAO;
+package dao;
 
-import Entity.User;
+import entity.User;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -106,7 +106,7 @@ public class UserDAO extends IDAO<User> {
     }
 
     @Override
-    public User[] selectById(int id) {
+    public User selectById(int id) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -129,7 +129,6 @@ public class UserDAO extends IDAO<User> {
         }
     }
 
-    @Override
     public int update(User user) {
         
         String sql = "UPDATE USER set "+
