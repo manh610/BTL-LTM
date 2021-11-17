@@ -16,11 +16,10 @@ import java.sql.Statement;
  * @author ADMIN
  */
 public abstract class IDAO<T> {
-    Statement statement;
-    PreparedStatement preStatement;
-    Connection conn;
-    ResultSet rs;
-    
+    public Statement statement;
+    public PreparedStatement preStatement;
+    public Connection conn;
+    public ResultSet rs;
     public abstract T[] selectAll();
     public abstract T selectById(int id);
     public abstract int insert(T object);

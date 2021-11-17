@@ -124,12 +124,12 @@ public class ServerMultiChat extends javax.swing.JFrame implements Observer{
 
     private void btnCountUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCountUserActionPerformed
         // TODO add your handling code here:
-        txtStatus.append("Số user online: " + mServerManager.countUser() + "\n");
+//        txtStatus.append("Số user online: " + mServerManager.countUser() + "\n");
     }//GEN-LAST:event_btnCountUserActionPerformed
 
     private void btnCountRoomActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCountRoomActionPerformed
         // TODO add your handling code here:
-        txtStatus.append("Số phòng đang hoạt động: " + mServerManager.countRoom() + "\n");
+//        txtStatus.append("Số phòng đang hoạt động: " + mServerManager.countRoom() + "\n");
     }//GEN-LAST:event_btnCountRoomActionPerformed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
