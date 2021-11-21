@@ -39,7 +39,7 @@ public class MessageDAO extends IDAO<Message> {
     
 
     @Override
-    public Message[] selectAll() {
+    public List<Message> selectAll() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -71,29 +71,26 @@ public class MessageDAO extends IDAO<Message> {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
-    public Message[] selectByIdRoom(int idRoom){
+    public List<Message> selectByRoomId(Room room){
         List<Message> messages = new ArrayList<>();
-        Message[] result;
+        String sql = "Select * from message where RoomId = ?";
         try{
-            String sql = "Select * from message where idRoom=" + idRoom + "";
-            rs = statement.executeQuery(sql);
-            int i=0;
+            this.preStatement = this.conn.prepareStatement(sql, statement.RETURN_GENERATED_KEYS);
+            this.preStatement.setInt(1, room.getId());
+            rs = preStatement.executeQuery(sql);
+            Message message = new Message();
             while(rs.next()){
-                int id = rs.getInt(1);
-                int idUser = rs.getInt(2);
-                String content = rs.getString(4);
-                Date sendTime = rs.getDate(5);
-                User user = userDAO.selectById(idUser);
-                Message message = new Message(id, content, sendTime, user);
+                message.setId(rs.getInt("ID"));
+                message.setUser(userDAO.selectById(rs.getInt("UserID")));
+                message.setContent("Content");
+                message.setSendTime(rs.getDate("SendTime"));
                 messages.add(message);
-                i++;
             }
-            result = new Message[i];
         }catch(SQLException e){
             e.printStackTrace();
             return null;
         }
-        return messages.toArray(result);
+        return messages;
     }
 
     

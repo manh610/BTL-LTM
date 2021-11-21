@@ -7,7 +7,7 @@ package view;
 
 import flag.ActionFlags;
 import core.Client;
-import core.Result;
+import entity.Response;
 import flag.ResultFlags;
 import entity.User;
 import java.io.UnsupportedEncodingException;
@@ -158,11 +158,10 @@ public class RegisterForm extends javax.swing.JFrame implements Observer {
 
     @Override
     public void update(Observable o, Object arg) {
-        Result result = (Result) arg;
-        if (result.resultFlags.equals(ResultFlags.ERROR)) {
-            JOptionPane.showMessageDialog(null, result.content, "Có lỗi xảy ra trong quá trình đăng ký", JOptionPane.ERROR_MESSAGE);
-        } else if (result.actionFlags.equals(ActionFlags.REGISTER)) {
-
+        Response response = (Response) arg;
+        if (response.getResultType().equals(ResultFlags.ERROR)) {
+            JOptionPane.showMessageDialog(null, response.getContent(), "Có lỗi xảy ra trong quá trình đăng ký", JOptionPane.ERROR_MESSAGE);
+        } else if (response.getActionType().equals(ActionFlags.REGISTER)) {
             JOptionPane.showMessageDialog(rootPane, "Đăng ký thành công");
             LoginForm lg = new LoginForm();
             lg.setVisible(true);

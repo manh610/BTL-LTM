@@ -7,10 +7,13 @@ package dao;
 
 import entity.Message;
 import entity.Room;
+import entity.User;
 import entity.UserRoom;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -31,7 +34,7 @@ public class RoomDAO extends IDAO<Room> {
     }
 
     @Override
-    public Room[] selectAll() {
+    public List<Room> selectAll() {
 //        Room[] rooms = null;
 //        UserRoom[] userrooms =null;
 //        Message[] messages = null;
@@ -57,7 +60,31 @@ public class RoomDAO extends IDAO<Room> {
     return  null;
     }
 
-    
+    public List<Room> getListRoomByUserId(User user){
+        List<Room> listRoom = new ArrayList<Room>();
+        String sql =    "SELECT room.ID, room.Description FROM room, userroom, user\n" +
+                            "where user.ID = userroom.UserID \n" +
+                            "and userroom.RoomID = room.ID\n" +
+                            "and user.ID = ?";
+        
+        try{
+            preStatement = this.conn.prepareStatement(sql);
+            preStatement.setInt(1, user.getId());
+            rs = preStatement.executeQuery(sql);
+            Room room = new Room();
+            while(rs.next()){
+                room.setId(rs.getInt("ID"));
+                room.setDescription(rs.getString("Description"));
+                room.setListMessage(messageDAO.selectByRoomId(room));
+                room.setListUserRoom(userromDAO.selectListUserRoomByRoomId(room.getId()));
+                listRoom.add(room);
+            }
+            return listRoom;
+        }catch(SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     @Override
     public int insert(Room room) {

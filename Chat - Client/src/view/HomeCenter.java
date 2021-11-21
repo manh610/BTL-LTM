@@ -4,46 +4,96 @@
  * and open the template in the editor.
  */
 package view;
+
 import core.Client;
-import core.Result;
+import entity.Response;
+import entity.Room;
+import entity.User;
+import flag.ActionFlags;
 import flag.ResultFlags;
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+
 /**
  *
  * @author APC-LTN
  */
-public class RoomCenter extends javax.swing.JFrame implements Observer{
-    Client mClientManager;
-    String mNickName;
-    LoginForm mLogin;
-    public RoomCenter(LoginForm login, Client clientManager) {
-        initComponents();
-        mLogin = login;
-        mClientManager = clientManager;
-        mClientManager.addObserver(this);
-    }
-    
-    public RoomCenter(){
-        
-    }
-    public void FillListRoom(Result result)
-    {
-        DefaultTableModel dtm = (DefaultTableModel)tbRooms.getModel(); 
-        if(result.content.length()>0)
-        {
-            String[] rows = result.content.split("<row>");
-            for (int i = 0; i < rows.length; i++) 
-            {
-                String[] cols = rows[i].split("<col>");
+public class HomeCenter extends javax.swing.JFrame implements Observer {
 
-                dtm.addRow(cols);
+    private Client client;
+    private User user;
+    private LoginForm loginForm;
+
+    public HomeCenter(Client client, LoginForm loginForm, User user) {
+        initComponents();
+        this.client = client;
+        this.client.addObserver(this);
+        this.client.homeController.getAllUser();
+        this.client.userController.getListRoom(user);
+        this.loginForm = loginForm;
+        this.user = user;
+    }
+
+    @Override
+    public void update(Observable o, Object arg) {
+        Response response = (Response) arg;
+        if (response.getResultType().equals(ResultFlags.ERROR)) {
+            JOptionPane.showMessageDialog(null, response.getContent(), "Thất bại", JOptionPane.ERROR_MESSAGE);
+        } else {
+            System.out.println(response.getActionType());
+            switch (response.getActionType()) {
+                case ActionFlags.GET_ALL_USER: {
+                    FillListUser((List<User>) response.getEntity());
+                    break;
+                }
+                case ActionFlags.GET_LIST_ROOM:{
+                    FillListRoom((List<Room>) response.getEntity());
+                    break;
+                }
+
+//                case ActionFlags.CREATE_ROOM: {
+//                    client.deleteObservers();
+//                    RoomChat roomChat = new RoomChat(this, client, result.content, txtTenPhong.getText().trim(), 1);
+//                    roomChat.setVisible(true);
+//                    this.setVisible(false);
+//                    break;
+//                }
+//                case ActionFlags.JOIN_ROOM: {
+//                    int indexRow = tblListPhong.getSelectedRow();
+//                    if (indexRow < 0) {
+//                        JOptionPane.showMessageDialog(null, "Bạn chưa chọn phòng nào", "Chưa chọn phòng", JOptionPane.WARNING_MESSAGE);
+//                        return;
+//                    }
+//                    tbRoomsmaPhong = tblListPhong.getValueAt(indexRow, 0).toString();
+//                    String tenPhong = tblListPhong.getValueAt(indexRow, 1).toString();
+//                    int soNguoi = Integer.parseInt(tblListPhong.getValueAt(indexRow, 2).toString());
+//                    client.deleteObserver(this);
+//                    RoomChat roomChat = new RoomChat(this, client, maPhong, tenPhong, soNguoi + 1);
+//                    roomChat.setVisible(true);
+//                    this.setVisible(false);
+//                    break;
+//                }
             }
         }
     }
 
+    public void FillListUser(List<User> listUser) {
+        DefaultTableModel tm = (DefaultTableModel) tbUserOnline.getModel();
+        tm.setRowCount(0);
+        for (User user : listUser) {
+            tm.addRow(user.toObjects());
+        }
+    }
+    public void FillListRoom(List<Room> listRoom) {
+        DefaultTableModel tm = (DefaultTableModel) tbUserOnline.getModel();
+        tm.setRowCount(0);
+        for (Room room: listRoom) {
+            tm.addRow(room.toObjects());
+        }
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -83,11 +133,11 @@ public class RoomCenter extends javax.swing.JFrame implements Observer{
 
             },
             new String [] {
-                "ID", "Name", "Quantity"
+                "Name", "Quantity"
             }
         ) {
             boolean[] canEdit = new boolean [] {
-                false, false, false
+                false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -212,87 +262,44 @@ public class RoomCenter extends javax.swing.JFrame implements Observer{
 
     private void btnCreateRoomActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCreateRoomActionPerformed
         // TODO add your handling code here:
-       String tenPhong = txtTenPhong.getText().trim();
-       if(tenPhong.length()==0)
-        {
-            JOptionPane.showMessageDialog(null, "Vui lòng nhập tên phòng", "Chưa nhập tên phòng", JOptionPane.WARNING_MESSAGE);
-            txtTenPhong.requestFocus();
-            return;
-        }
-        mClientManager.createRoom(tenPhong);
+//        String tenPhong = txtTenPhong.getText().trim();
+//        if (tenPhong.length() == 0) {
+//            JOptionPane.showMessageDialog(null, "Vui lòng nhập tên phòng", "Chưa nhập tên phòng", JOptionPane.WARNING_MESSAGE);
+//            txtTenPhong.requestFocus();
+//            return;
+//        }
+//        client.createRoom(tenPhong);
     }//GEN-LAST:event_btnCreateRoomActionPerformed
 
     private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
         // TODO add your handling code here:
-        mClientManager.getListRoom();
-        this.setTitle("Xin chào " + mClientManager.nickname);
+//        client.getListRoom();
+//        this.setTitle("Xin chào " + client.nickname);
     }//GEN-LAST:event_formWindowOpened
 
     private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
         // TODO add your handling code here:
-        mClientManager.logout();
-        mClientManager.dispose();
-        mLogin.setVisible(true);
+        client.userController.logout(user);
+        client.dispose();
+        loginForm.setVisible(true);
         this.dispose();
+
     }//GEN-LAST:event_btnLogoutActionPerformed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         // TODO add your handling code here:
-        mClientManager.logout();
-        mClientManager.dispose();
+        client.userController.logout(user);
+        client.dispose();
         System.exit(0);
     }//GEN-LAST:event_formWindowClosing
 
     private void txtRoomNameKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtRoomNameKeyTyped
         // TODO add your handling code here:
-        String after = txtTenPhong.getText() + evt.getKeyChar();
-        after = after.toLowerCase();
-        if(after.contains("<row>") || after.contains("<cotbRooms       evt.consume();
+//        String after = txtTenPhong.getText() + evt.getKeyChar();
+//        after = after.toLowerCase();
+//        if (after.contains("<row>") || after.contains("<cotbRooms       evt.consume();
     }//GEN-LAST:event_txtRoomNameKeyTyped
 
-    @Override
-    public void update(Observable o, Object arg) {
-        btnRefresh.setEnabled(true);
-        Result result = (Result)arg;
-        if(result.resultFlags.equals(ResultFlags.ERROR))
-        {
-        tbRoomsane.showMessageDialog(null, result.content, "Thất bại", JOptionPane.ERRtbRooms
-            return;
-        }
-        switch (result.actionFlags)
-        {
-       tbRoomstionFlags.GET_LIST_ROOM:
-            {
-                FillListRoom(result);
-                break;
-            }
-            case ActionFlags.CREATE_ROOM:
-            {
-                mClientManager.deleteObservers();
-                RoomChat roomChat = new RoomChat(this, mClientManager, result.content, txtTenPhong.getText().trim(), 1);
-                roomChat.setVisible(true);
-                this.setVisible(false);
-                break;
-            }
-            case ActionFlags.JOIN_ROOM:
-            {
-                int indexRow = tblListPhong.getSelectedRow();
-                if(indexRow<0)
-                {
-                    JOptionPane.showMessageDialog(null, "Bạn chưa chọn phòng nào", "Chưa chọn phòng", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-           tbRoomsmaPhong = tblListPhong.getValueAt(indexRow, 0).toString();
-                String tenPhong = tblListPhong.getValueAt(indexRow, 1).toString();
-                int soNguoi = Integer.parseInt(tblListPhong.getValueAt(indexRow, 2).toString());
-                mClientManager.deleteObserver(this);
-                RoomChat roomChat = new RoomChat(this, mClientManager, maPhong, tenPhong, soNguoi+1);
-                roomChat.setVisible(true);
-                this.setVisible(false);
-                break;
-            }
-        }
-    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCreateRoom;

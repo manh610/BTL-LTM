@@ -68,30 +68,41 @@ public class UserDAO extends IDAO<User> {
     }
 
     @Override
-    public User[] selectAll() {
-//        List<User> users = new ArrayList<>();
-//        User[] result;
-//        try{
-//            String sql = "Select * from user";
-//            rs = statement.executeQuery(sql);
-//            int i=0;
-//            while(rs.next()){
-//                User user = new User(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getString(4));
-//                users.add(user);
-//                i++;
-//            }
-//            result = new User[i];
-//        }catch(SQLException e){
-//            e.printStackTrace();
-//            return null;
-//        }
-//        return users.toArray(result);
-        return null;
+    public List<User> selectAll() {
+        List<User> users = new ArrayList<>();
+        try{
+            String sql = "Select * from user";
+            rs = statement.executeQuery(sql);
+            while(rs.next()){
+                User user = new User(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5));
+                users.add(user);
+            }
+            return users;
+        }catch(SQLException e){
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override
     public User selectById(int id) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        String sql = "Select * from user where id = ?";
+        try{
+            preStatement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            preStatement.setInt(1, id);
+            rs = preStatement.executeQuery(sql);
+            User user = new User();
+            if(rs.next()){
+                user.setId(rs.getInt("ID"));
+                user.setUsername(rs.getString("Username"));
+                user.setPassword(rs.getString("Password"));
+                user.setDisplayName(rs.getString("DisplayName"));
+            }
+            return user;
+        }catch(SQLException e){
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override
@@ -118,14 +129,16 @@ public class UserDAO extends IDAO<User> {
         String sql = "UPDATE USER set "+
 				"USERNAME = ?,"+
 				"PASSWORD = ?,"+
-				"DISPLAYNAME = ? " +
+				"DISPLAYNAME = ?," +
+                                "ACTIVE = ? " +
 				"Where ID = ?";
         try{
             this.preStatement = this.conn.prepareStatement(sql);
             this.preStatement.setString(1, user.getUsername());
             this.preStatement.setString(2, user.getPassword());
             this.preStatement.setString(3, user.getDisplayName());
-            this.preStatement.setInt(4, user.getId());
+            this.preStatement.setString(4, user.getActive());
+            this.preStatement.setInt(5, user.getId());
             int check = this.preStatement.executeUpdate();
             return check;
         }catch(SQLException e){
@@ -133,7 +146,8 @@ public class UserDAO extends IDAO<User> {
             return 0;
         }
     }
-
+    
+    
     @Override
     public void closeConnection() {
         try {

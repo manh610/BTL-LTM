@@ -5,88 +5,72 @@
  */
 package controller;
 
-import core.Client;
-import core.Result;
+import entity.Request;
 import entity.User;
 import flag.ActionFlags;
-import flag.ResultFlags;
-import java.io.BufferedWriter;
-import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.Observable;
-import java.util.Observer;
+import java.io.ObjectOutputStream;
 
 /**
  *
  * @author DUC
  */
-public class UserController extends Observable{
+public class UserController{
 
-    private final BufferedWriter bufferWriter;
-    private Observer obs;
-    public UserController(BufferedWriter bufferWriter, Observer obs) {
-        this.bufferWriter = bufferWriter;
-        this.obs = obs;
+    private final ObjectOutputStream objectOutputStream;
+    public UserController(ObjectOutputStream objectOutputStream) {
+        this.objectOutputStream = objectOutputStream;
     }
     
-    
-    @Override
-    public void notifyObservers(Object arg) {
-        super.setChanged();
-        super.notifyObservers(arg);
-    }
-    
-    private void send(String content){
+    private void send(Request request){
         try {
-            bufferWriter.write(content + "\n");
-            bufferWriter.flush();
+           objectOutputStream.writeObject(request);
         } catch (IOException ex) {
-            Result result = new Result(ex.toString(), ResultFlags.ERROR, "Không thể kết nối tới server");
-            notifyObservers(result);
+           ex.printStackTrace();
         }
     }
     
-    public void login(String nickName, String password){
-        String line = ActionFlags.LOGIN + ";" + nickName + ";" + password;
-        send(line);
+    public void login(String username, String password){
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(password);
+        Request request = new Request(ActionFlags.LOGIN, user);
+        send(request);
     }
 
     public void register(User user){
-        String line = ActionFlags.REGISTER + ";" + user.getUsername() + ";" + user.getPassword() + ";" + user.getDisplayName();
-        send(line);
+        Request request = new Request(ActionFlags.REGISTER, user);
+        send(request);
     }
     
-    public void logout() {
-        String line = ActionFlags.LOGOUT + ";null";
-        send(line);
+    public void logout(User user) {
+        Request request = new Request(ActionFlags.LOGOUT, user);
+        send(request);
     }
-    public void sendMessage(String mess) {
-        mess = mess.replaceAll("\\n", "<br>");
-        String line = ActionFlags.SEND_MESSAGE + ";" + mess;
-        send(line);
+//    public void sendMessage(String mess) {
+//        mess = mess.replaceAll("\\n", "<br>");
+//        String line = ActionFlags.SEND_MESSAGE + ";" + mess;
+//        send(line);
+//    }
+//    
+//    
+    public void getListRoom(User user) {
+        Request request = new Request(ActionFlags.GET_LIST_ROOM, user);
+        send(request);
     }
-    
-    
-    public void getListRoom() {
-        String line = ActionFlags.GET_LIST_ROOM + ";";
-        send(line);
-    }
-
-    public void createRoom(String roomName) {
-        String line = ActionFlags.CREATE_ROOM + ";" + roomName;
-        send(line);
-    }
-
-    public void joinRoom(String maPhong) {
-        String line = ActionFlags.JOIN_ROOM + ";" + maPhong;
-        send(line);
-    }
-
-    public void leaveRoom() {
-        String line = ActionFlags.LEAVE_ROOM + ";null";
-        send(line);
-    }
+//
+//    public void createRoom(String roomName) {
+//        String line = ActionFlags.CREATE_ROOM + ";" + roomName;
+//        send(line);
+//    }
+//
+//    public void joinRoom(String maPhong) {
+//        String line = ActionFlags.JOIN_ROOM + ";" + maPhong;
+//        send(line);
+//    }
+//
+//    public void leaveRoom() {
+//        String line = ActionFlags.LEAVE_ROOM + ";null";
+//        send(line);
+//    }
 }

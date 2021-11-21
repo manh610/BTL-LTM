@@ -1,21 +1,23 @@
 package entity;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class Room implements Serializable {
+
     private int id;
     private String description;
-    private UserRoom userRoom;
-    private Message message;
+    private List<UserRoom> listUserRoom;
+    private List<Message> listMessage;
 
     public Room() {
     }
 
-    public Room(int id, String description, UserRoom userRoom, Message message) {
+    public Room(int id, String description, List<UserRoom> listUserRoom, List<Message> listMessage) {
         this.id = id;
         this.description = description;
-        this.userRoom = userRoom;
-        this.message = message;
+        this.listUserRoom = listUserRoom;
+        this.listMessage = listMessage;
     }
 
     public int getId() {
@@ -34,19 +36,26 @@ public class Room implements Serializable {
         this.description = description;
     }
 
-    public UserRoom getUserRoom() {
-        return userRoom;
+    public List<UserRoom> getListUserRoom() {
+        return listUserRoom;
     }
 
-    public void setUserRoom(UserRoom userRoom) {
-        this.userRoom = userRoom;
+    public void setListUserRoom(List<UserRoom> listUserRoom) {
+        this.listUserRoom = listUserRoom;
     }
 
-    public Message getMessage() {
-        return message;
+    public List<Message> getListMessage() {
+        return listMessage;
     }
 
-    public void setMessage(Message message) {
-        this.message = message;
+    public void setListMessage(List<Message> listMessage) {
+        this.listMessage = listMessage;
     }
+
+    public Object[] toObjects() {
+        return new Object[]{
+            description, listUserRoom.size()
+        };
+    }
+
 }

@@ -19,9 +19,9 @@ public class RoomChat extends javax.swing.JFrame implements Observer {
     Client mClientManager;
     String mMaPhong = "";
     String mTenPhong = "";
-    RoomCenter mListRoom;
+    HomeCenter mListRoom;
     int mSoNguoi = 1;
-    public RoomChat(RoomCenter listRoom, Client cm, String maPhong, String tenPhong, int soNguoi) {
+    public RoomChat(HomeCenter listRoom, Client cm, String maPhong, String tenPhong, int soNguoi) {
         initComponents();
         mListRoom = listRoom;
         mClientManager = cm;

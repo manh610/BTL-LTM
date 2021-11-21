@@ -1,12 +1,13 @@
 package core;
 
-import controller.RoomController;
+import controller.HomeController;
 import controller.UserController;
+import entity.Response;
+import flag.ActionFlags;
 import flag.ResultFlags;
-import java.io.BufferedWriter;
-import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -20,24 +21,21 @@ public class Client extends Observable {
     String serverName;
     int port = 11000;
     Socket socket;
-    private BufferedWriter bufferWriter;
-    private DataInputStream dataInputStream;
+    private ObjectOutputStream objectOutputStream;
+    private ObjectInputStream objectInputStream;
     public UserController userController;
-    public RoomController roomController;
+    public HomeController homeController;
     private Thread thread;
     public String nickname;
-    private Observer obs;
 
     public Client(Observer obs, String ipAddress) throws UnknownHostException {
         this.addObserver(obs);
-        this.obs = obs;
         this.serverName = ipAddress;
         System.out.println(InetAddress.getLocalHost().getHostAddress());
     }
 
     public Client(Socket socket, Observer obs) {
         this.addObserver(obs);
-        this.obs = obs;
         this.socket = socket;
     }
 
@@ -58,46 +56,41 @@ public class Client extends Observable {
     public boolean startConnect() {
         try {
             socket = new Socket(serverName, port);
-            dataInputStream = new DataInputStream(socket.getInputStream());
-            bufferWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF8"));
-            userController = new UserController(bufferWriter, this.obs);
-            roomController = new RoomController(bufferWriter, this.obs);
+            objectInputStream = new ObjectInputStream(socket.getInputStream());
+            objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+            userController = new UserController(objectOutputStream);
+            homeController = new HomeController(objectOutputStream);
             startThreadWaitResult();
             return true;
         } catch (IOException ex) {
-            Result result = new Result(ex.toString(), ResultFlags.ERROR, "Không thể kết nối đến server");
-            notifyObservers(result);
+            Response response = new Response(ActionFlags.ERROR, ResultFlags.ERROR ,"Không thể kết nối tới server" , ex);
+            notifyObservers(response);
             return false;
         }
     }
 
     void startThreadWaitResult() {
-        thread = new Thread(() -> {
-            try {
-                while (true) {
-                    read();
+        thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    while (true) {
+                        read();
+                    }
+                } catch (IOException ex) {
+                    Response response = new Response(ActionFlags.ERROR, ResultFlags.ERROR ,"Kết nối tới server có lỗi" , ex);
+                    notifyObservers(response);
+                } catch (ClassNotFoundException ex) {
+                    Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
                 }
-            } catch (IOException ex) {
-                Result result = new Result(ex.toString(), ResultFlags.ERROR, "Kết nối tới server có lỗi");
-                notifyObservers(result);
             }
         });
         thread.start();
     }
 
-    private void read() throws IOException {
-        String[] lines = dataInputStream.readUTF().split(";", -1);
-        Result result;
-        if (lines.length == 3) {
-            result = new Result(lines[0], lines[1], lines[2]);
-        } else {
-            String content = "";
-            for (int i = 2; i < lines.length; i++) {
-                content += lines[i] + ";";
-            }
-            result = new Result(lines[0], lines[1], content);
-        }
-        notifyObservers(result);
+    private void read() throws IOException, ClassNotFoundException {
+        Response response = (Response) objectInputStream.readObject();
+        notifyObservers(response);
     }
 
     @Override

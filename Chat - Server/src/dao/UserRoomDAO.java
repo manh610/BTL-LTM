@@ -19,7 +19,7 @@ import java.util.List;
  * @author DUC
  */
 public class UserRoomDAO extends IDAO<UserRoom> {
-    
+
     UserDAO userDAO;
 
     public UserRoomDAO(Connection conn) {
@@ -30,69 +30,66 @@ public class UserRoomDAO extends IDAO<UserRoom> {
             e.printStackTrace();
         }
     }
-    
 
     @Override
-    public UserRoom[] selectAll() {
-        List<UserRoom> userRooms = new ArrayList<>();
-        UserRoom[] result;
-        try{
-            String sql = "Select * from userroom";
-            rs = statement.executeQuery(sql);
-            int i=0;
-            while(rs.next()){
-                int id = rs.getInt(1);
-                int idUser = rs.getInt(2);
-                User user = userDAO.selectById(idUser);
-                UserRoom userroom = new UserRoom(id, user);
-                i++;
-            }
-            result = new UserRoom[i];
-        }catch(SQLException e){
-            e.printStackTrace();
-            return null;
-        }
-        return userRooms.toArray(result);
+    public List<UserRoom> selectAll() {
+//        List<UserRoom> userRooms = new ArrayList<>();
+//        UserRoom[] result;
+//        try{
+//            String sql = "Select * from userroom";
+//            rs = statement.executeQuery(sql);
+//            int i=0;
+//            while(rs.next()){
+//                int id = rs.getInt(1);
+//                int idUser = rs.getInt(2);
+//                User user = userDAO.selectById(idUser);
+//                UserRoom userroom = new UserRoom(id, user);
+//                i++;
+//            }
+//            result = new UserRoom[i];
+//        }catch(SQLException e){
+//            e.printStackTrace();
+//            return null;
+//        }
+//        return userRooms.toArray(result);
+        return null;
     }
 
     @Override
     public UserRoom selectById(int id) {
-        String sql = "Select * from Userroom where id='" + id+"'" ;
-        
-        try{
+        String sql = "Select * from Userroom where id='" + id + "'";
+
+        try {
             UserRoom userroom = null;
             rs = statement.executeQuery(sql);
-            int i=0;
-            while(rs.next()){
+            int i = 0;
+            while (rs.next()) {
                 int idUser = rs.getInt(2);
                 User user = userDAO.selectById(idUser);
                 userroom = new UserRoom(id, user);
                 i++;
             }
             return userroom;
-        }catch(SQLException e){
+        } catch (SQLException e) {
             e.printStackTrace();
             return null;
         }
     }
-    public UserRoom[] selectByIdRoom(int idRoom) {
-        String sql = "Select * from Userroom where roomid='" + idRoom+"'" ;
-        List<UserRoom> userrooms = new ArrayList<>();
-        UserRoom[] result;
+
+    public List<UserRoom> selectListUserRoomByRoomId(int roomId) {
+        List<UserRoom> userRooms = new ArrayList<>();
+        String sql = "Select * from userroom where RoomId = ?";
         try{
-            UserRoom userroom = null;
-            rs = statement.executeQuery(sql);
-            int i=0;
+            this.preStatement = this.conn.prepareStatement(sql, statement.RETURN_GENERATED_KEYS);
+            this.preStatement.setInt(1, roomId);
+            rs = preStatement.executeQuery(sql);
+            UserRoom userRoom = new UserRoom();
             while(rs.next()){
-                int id = rs.getInt(1);
-                int idUser = rs.getInt(3);
-                User user = userDAO.selectById(idUser);
-                userroom = new UserRoom(id, user);
-                userrooms.add(userroom);
-                i++;
+                userRoom.setId(rs.getInt("ID"));
+                userRoom.setUser(userDAO.selectById(rs.getInt("UserID")));
+                userRooms.add(userRoom);
             }
-            result = new UserRoom[i];
-            return result;
+            return userRooms;
         }catch(SQLException e){
             e.printStackTrace();
             return null;
@@ -102,27 +99,25 @@ public class UserRoomDAO extends IDAO<UserRoom> {
     @Override
     public int insert(UserRoom userroom) {
         return 0;
-       
+
     }
-    
+
     public int insertUserRoom(UserRoom userroom, Room room) {
-        String sql = "INSERT INTO USER (USERID,"+
-				"ROOMID)"+
-				"VALUES (?,?)";
-        try{
+        String sql = "INSERT INTO USER (USERID,"
+                + "ROOMID)"
+                + "VALUES (?,?)";
+        try {
             this.preStatement = this.conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             this.preStatement.setInt(1, userroom.getId());
             this.preStatement.setInt(2, room.getId());
             int check = this.preStatement.executeUpdate();
             return check;
-        }catch(SQLException e){
+        } catch (SQLException e) {
             e.printStackTrace();
             return 0;
         }
     }
-    
 
-    
     @Override
     public void closeConnection() {
         try {

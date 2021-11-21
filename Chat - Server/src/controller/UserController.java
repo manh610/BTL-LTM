@@ -5,74 +5,102 @@
  */
 package controller;
 
+import dao.RoomDAO;
 import dao.UserDAO;
+import entity.Response;
+import entity.Room;
 import entity.User;
 import flag.ActionFlags;
 import flag.ResultFlags;
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Date;
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
  * @author DUC
  */
-public class UserController extends Observable {
+public class UserController {
 
-    private BufferedReader bufferReader;
-    private DataOutputStream dataOutputStream;
+    public ObjectOutputStream objectOutputStream;
+    public ObjectInputStream objectInputStream;
     private static String DB_URL = "jdbc:mysql://localhost:3306/btl_ltm";
     private static String USER_NAME = "root";
     private static String PASSWORD = "123456";
-    private UserDAO userDAO;
+    public UserDAO userDAO;
+    public RoomDAO roomDAO;
+    public Socket socket;
 
-    public UserController(BufferedReader bufferReader, DataOutputStream dataOutputStream, Observer obs) throws SQLException {
-        this.addObserver(obs);
-        this.bufferReader = bufferReader;
-        this.dataOutputStream = dataOutputStream;
-        userDAO = new UserDAO(DriverManager.getConnection(DB_URL, USER_NAME, PASSWORD));
+    public UserController(Socket socket) throws SQLException, IOException {
+        this.socket = socket;
+        this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+        this.objectInputStream = new ObjectInputStream(socket.getInputStream());
+        this.userDAO = new UserDAO(DriverManager.getConnection(DB_URL, USER_NAME, PASSWORD));
+        this.roomDAO = new RoomDAO(DriverManager.getConnection(DB_URL, USER_NAME, PASSWORD));
+//        System.out.println(objectInputStream);
+//        System.out.println(objectOutputStream);
     }
-    
-    @Override
-    public void notifyObservers(Object arg) {
-        super.setChanged();
-        super.notifyObservers(arg);
-    }
-    
-    public void send(String actionType, String resultCode, String content) {
+
+    public void send(Response response) {
         try {
-            dataOutputStream.writeUTF(actionType + ";" + resultCode + ";" + content);
+            objectOutputStream.writeObject(response);
         } catch (IOException ex) {
             ex.printStackTrace();
         }
     }
 
-    public void checkLogin(String username, String password, String actionType) {
-        System.out.println(username + password);
-        User user = userDAO.checkLogin(username, password);
+    public void logOut(User user, String actionType) {
+        user.setActive("offline");
+        userDAO.update(user);
+    }
+
+    public boolean checkLogin(User objUser, String actionType) {
+
+        User user = userDAO.checkLogin(objUser.getUsername(), objUser.getPassword());
         if (user != null) {
-            send(actionType, ResultFlags.OK, "OK");
-            userDAO.update(user); // update logged
-            notifyObservers(" vừa đăng nhập thành công");
+            user.setActive("online");
+            userDAO.update(user);
+            Response response = new Response(actionType, ResultFlags.OK, "OK", user);
+            send(response);
+            return true;
         } else {
-            send(actionType, ResultFlags.ERROR, "Sai thông tin đăng nhập");
+            Response response = new Response(actionType, ResultFlags.ERROR, "Sai thông tin đăng nhập", null);
+            send(response);
+            return false;
         }
     }
 
+    public void getListRoom(User user) {
+        List<Room> listRoom = roomDAO.getListRoomByUserId(user);
+        if (listRoom != null) {
+            Response response = new Response(ActionFlags.GET_LIST_ROOM, ResultFlags.OK, "OK", listRoom);
+            send(response);
+        }
+    }
 
-    public void checkRegister(String username, String password, String displayName, String actionType) {
-        if(userDAO.checkExistsUser(username) == 1){
-            User user = new User(username, password, displayName, 0);
-            send(actionType, ResultFlags.OK, "OK");
+    public void getAllUser() {
+        List<User> listUser = userDAO.selectAll();
+        if (listUser != null) {
+            Response response = new Response(ActionFlags.GET_ALL_USER, ResultFlags.OK, "", listUser);
+            send(response);
+        }
+    }
+
+    public void checkRegister(User user, String actionType) {
+        if (userDAO.checkExistsUser(user.getUsername()) == 1) {
+            Response response = new Response(actionType, ResultFlags.OK, "OK", null);
             userDAO.insert(user);
-        }else{
-            send(actionType, ResultFlags.ERROR, "Tài khoản đã tồn tại");
+            send(response);
+        } else {
+            Response response = new Response(actionType, ResultFlags.ERROR, "Tài khoản đã tồn tại", null);
+            send(response);
         }
     }
 

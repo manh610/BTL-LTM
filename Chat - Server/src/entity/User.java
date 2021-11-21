@@ -8,22 +8,27 @@ public class User implements Serializable {
     private String username;
     private String password;
     private String displayName;
+    private String active;
+    
     public User() {
     }
 
-    public User(String username, String password, String displayName, int logged) {
-        this.username = username;
-        this.password = password;
-        this.displayName = displayName;
-    }
-    
-    public User(int id, String username, String password, String displayName, int logged) {
+    public User(int id, String username, String password, String displayName) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.displayName = displayName;
     }
 
+    public User(int id, String username, String password, String displayName, String active) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.displayName = displayName;
+        this.active = active;
+    }
+    
+    
     public int getId() {
         return id;
     }
@@ -48,6 +53,14 @@ public class User implements Serializable {
         this.password = password;
     }
 
+    public String getActive() {
+        return active;
+    }
+
+    public void setActive(String active) {
+        this.active = active;
+    }
+    
     public String getDisplayName() {
         return displayName;
     }
@@ -55,6 +68,10 @@ public class User implements Serializable {
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
     }
-
- 
+    
+    public Object[] toObjects(){
+        return new Object[]{
+            username,active
+        };
+    }
 }

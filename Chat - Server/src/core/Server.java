@@ -6,144 +6,126 @@
 package core;
 
 import controller.UserController;
+import entity.Request;
+import entity.User;
 import flag.ActionFlags;
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.SQLException;
-import java.util.Observable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.Observer;
-import java.util.Random;
+
 
 /**
  *
  * @author APC-LTN
  */
-public class Server extends Observable {
+public class Server {
 
-    int port = 11000;
-    private BufferedReader bufferReader;
-    private DataOutputStream dataOutputStream;
-    private UserController userController;
-    private Observer obs;
-    ServerSocket serverSocket;
-    Thread threadAccept, threadProcess;
+    private static final int port = 11000;
+    private static List<UserController> userControllers = new ArrayList<>();
+    private static List<UserController> userWaitLogout = new ArrayList<>();
 
-    public Server(Observer obs) {
-        this.addObserver(obs);
-        this.obs = obs;
-    }
-
-    public Server(ServerSocket serverSocket, Observer obs) {
-        this.addObserver(obs);
-        this.obs = obs;
-        this.serverSocket = serverSocket;
-    }
-
-    public void dispose() throws IOException {
-        if (threadAccept != null) {
-            threadAccept.stop();
-//            threadProcess.stop();
+    public static void main(String[] args) throws Exception {
+        ServerSocket serverSocket = new ServerSocket(port);
+        System.out.println("Server is running");
+        try {
+            while (true) {
+                new Handler(serverSocket.accept()).start();
+            }
+        } finally {
             serverSocket.close();
         }
     }
 
-    public boolean startServer() throws SQLException {
-        try {
-            serverSocket = new ServerSocket(port);
-            startThreadAccept();
-//            startThreadProcess();
-            notifyObservers("Khởi động server thành công");
+    private static class Handler extends Thread {
 
-            return true;
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            notifyObservers("Không thể khởi động server");
-            return false;
+        private Socket socket;
+        private UserController userController;
+
+        public Handler(Socket socket) {
+            this.socket = socket;
         }
-    }
 
-    private void startThreadAccept() {
-        threadAccept = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    while (true) {
-                        Socket socket = serverSocket.accept();
-                        bufferReader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF8"));
-                        dataOutputStream = new DataOutputStream(socket.getOutputStream());
-                        userController = new UserController(bufferReader, dataOutputStream, obs);
-                        checkRequest();
+        @Override
+        public void run() {
+            try {
+                userController = new UserController(socket);
+                userControllers.add(userController);
+                System.out.println(socket.getLocalAddress() + " da ket noi" + userControllers.size());
+
+                while (true) {
+                    if (userController.objectInputStream != null) {
+                        System.out.println("User size" + userControllers.size());
+                        checkRequest(userController);
+                    } else {
+                        break;
                     }
-                } catch (IOException ex) {
-                    notifyObservers("Lỗi kết nối");
-                } catch (SQLException ex) {
-                    Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+
+                }
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            } catch (SQLException ex) {
+                Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+//                userController.logOut(user, ActionFlags.LOGOUT);
+                userControllers.remove(userController);
+                userController.userDAO.closeConnection();
+                try {
+                    socket.close();
+                } catch (IOException e) {
                 }
             }
-        });
-        threadAccept.start();
-    }
-
-    @Override
-    public void notifyObservers(Object arg) {
-        super.setChanged();
-        super.notifyObservers(arg);
-    }
-//    private void startThreadProcess() {
-//        threadProcess = new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                try {
-//                    while (true) {
-//                        checkRequest();
-//                        Thread.sleep(0);
-//                    }
-//                } catch (IOException ex) {
-//                    notifyObservers("Lỗi kết nối");
-//                } catch (InterruptedException ex) {
-//                    Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
-//                }
-//            }
-//        });
-//        threadProcess.start();
-//    }
-
-    void checkRequest() throws IOException {
-        if (bufferReader == null) {
-            return;
         }
 
-        if (bufferReader.ready()) {
-            String request = bufferReader.readLine();
-            if (request != null) {
-                processRequest(request);
+        private static void sendListAllUser() {
+            for (int i = 0; i < userControllers.size(); i++) {
+                UserController uc = userControllers.get(i);
+                uc.getAllUser();
+                System.out.println("Gui danh sach user cho user " + i);
             }
         }
-    }
 
-    void processRequest(String request) {
-        String[] lines = request.split(";");
-        String actionType = lines[0];
-        switch (actionType) {
-            case ActionFlags.LOGIN: {
-                String username = lines[1];
-                String password = lines[2];
-                userController.checkLogin(username, password, actionType);
-                break;
-            }
-            case ActionFlags.REGISTER: {
-                String username = lines[1];
-                String password = lines[2];
-                String displayName = lines[3];
-                userController.checkRegister(username, password, displayName, actionType);
-                break;
-            }
+        private static void checkRequest(UserController uc) throws ClassNotFoundException, IOException {
+            Request request = (Request) uc.objectInputStream.readObject();
+            processRequest(uc, request);
+        }
+
+        private static void processRequest(UserController userController, Request request) throws IOException {
+            String actionType = request.getActionType();
+            System.out.println(actionType + " " + request.toString());
+            switch (actionType) {
+                case ActionFlags.LOGIN: {
+                    User user = (User) request.getEntity();
+                    if (userController.checkLogin(user, actionType)) {
+                        System.out.println("Thanh Cong");
+                    }
+                    break;
+                }
+                case ActionFlags.REGISTER: {
+                    User objUser = (User) request.getEntity();
+                    userController.checkRegister(objUser, actionType);
+                    break;
+                }
+                case ActionFlags.LOGOUT: {
+                    User user = (User) request.getEntity();
+                    userController.logOut(user, actionType);
+                    userController.objectInputStream = null;
+                    userController.objectOutputStream = null;
+                    if(userControllers.remove(userController))
+                        sendListAllUser();
+//                notifyObservers(user.getUsername() + " vừa đăng xuất");
+                    break;
+                }
+                case ActionFlags.GET_ALL_USER: {
+                    sendListAllUser();
+                    break;
+                }
 //            case ActionFlags.CREATE_ROOM: {
 //                String roomName = lines[1];
 //                RoomController room = generalRoom(roomName);
@@ -155,38 +137,12 @@ public class Server extends Observable {
 //                notifyObservers(user.nickName + " vừa tạo phòng " + roomName);
 //                break;
 //            }
-//            case ActionFlags.GET_LIST_ROOM: {
-//                int size = listRoom.size();
-//                int rowsPerBlock = 500;
-//                if (size > 0) {
-//                    String listRoom = "";
-//                    int start = 0;
-//                    int end = 0;
-//                    int numberBlock = (int) Math.floor(size / (double) rowsPerBlock);
-//                    for (int i = 0; i < numberBlock; i++) {
-//                        start = i * rowsPerBlock;
-//                        end = start + rowsPerBlock;
-//                        listRoom = "";
-//                        for (int j = start; j < end; j++) {
-//                            RoomController room = this.listRoom.get(j);
-//                            listRoom += room.roomID + "<col>" + room.roomName + "<col>" + room.countUser() + "<col>" + "<row>";
-//                        }
-//                        System.out.print("Gửi lần thứ: " + i);
-//                        user.send(actionType, ResultFlags.OK, listRoom);
-//                    }
-//
-//                    listRoom = "";
-//                    for (int i = end; i < size; i++) {
-//                        RoomController room = this.listRoom.get(i);
-//                        listRoom += room.roomID + "<col>" + room.roomName + "<col>" + room.countUser() + "<col>" + "<row>";
-//                    }
-//                    user.send(actionType, ResultFlags.OK, listRoom);
-//                } else {
-//                    user.send(actionType, ResultFlags.OK, "");
-//                }
-//                notifyObservers(user.nickName + " vừa lấy danh sách phòng");
-//                break;
-//            }
+            case ActionFlags.GET_LIST_ROOM: {
+                User user = (User) request.getEntity();
+                userController.getListRoom(user);
+                System.out.println("Gui danh sach phong cho user");
+                break;
+            }
 //            case ActionFlags.JOIN_ROOM: {
 //                String roomID = lines[1];
 //                int size = listRoom.size();
@@ -248,6 +204,7 @@ public class Server extends Observable {
 //                break;
 //
 //            }
+            }
         }
     }
 
@@ -285,15 +242,4 @@ public class Server extends Observable {
 //        }
 //        return true;
 //    }
-    String randomString(int length) {
-        String data = "1234567890qwertyuiopasdfghjklzxcvbnm";
-        int sizeData = data.length();
-        String result = "";
-        Random rd = new Random();
-        for (int i = 0; i < length; i++) {
-            result += data.charAt(rd.nextInt(sizeData));
-        }
-        return result;
-    }
-
 }

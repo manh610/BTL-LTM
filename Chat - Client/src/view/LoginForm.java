@@ -7,9 +7,9 @@ package view;
 
 import core.Client;
 import flag.ActionFlags;
-import core.Result;
+import entity.Response;
+import entity.User;
 import flag.ResultFlags;
-import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
 import java.util.Observable;
 import javax.swing.JOptionPane;
@@ -25,7 +25,8 @@ public class LoginForm extends javax.swing.JFrame implements Observer{
     public LoginForm() {
         initComponents();
     }
-
+    
+    
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -126,17 +127,16 @@ public class LoginForm extends javax.swing.JFrame implements Observer{
     @Override
     public void update(Observable o, Object arg) {
         btnLogin.setEnabled(true);
-        Result result = (Result)arg;
-        if(result.resultFlags.equals(ResultFlags.ERROR))
+        Response response = (Response) arg;
+        if(response.getResultType().equals(ResultFlags.ERROR))
         {
-            JOptionPane.showMessageDialog(null, result.content, "Thất bại", JOptionPane.ERROR_MESSAGE);
-        }else if(result.actionFlags.equals(ActionFlags.LOGIN))
+            JOptionPane.showMessageDialog(null, response.getContent(), "Thất bại", JOptionPane.ERROR_MESSAGE);
+        }else if(response.getActionType().equals(ActionFlags.LOGIN))
         {
-            JOptionPane.showMessageDialog(rootPane, "Đăng nhập thành công");
-            client.nickname = txtPassword.getText().trim();
-            client.deleteObserver(this);   
-            RoomCenter listRoom = new RoomCenter(this, client);
-            listRoom.setVisible(true);
+//            JOptionPane.showMessageDialog(rootPane, "Đăng nhập thành công");
+            client.deleteObserver(this); 
+            HomeCenter home = new HomeCenter(client, this, (User) response.getEntity());
+            home.setVisible(true);
             this.setVisible(false);
         }
     }
@@ -144,17 +144,18 @@ public class LoginForm extends javax.swing.JFrame implements Observer{
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
         // TODO add your handling code here:
         String password = txtPassword.getText().trim();
-        String nickName = txtUsername.getText().trim();
-        if(nickName.length()==0)
+        String username = txtUsername.getText().trim();
+        if(username.length()==0)
         {
-            JOptionPane.showMessageDialog(null, "Vui lòng nhập nick name", "Chưa nhập nick name", JOptionPane.WARNING_MESSAGE);
-            txtPassword.requestFocus();
+            JOptionPane.showMessageDialog(null, "Vui lòng nhập user name", "Chưa nhập user name", JOptionPane.WARNING_MESSAGE);
+            txtUsername.requestFocus();
             return;
         }
         if(client!=null)
         {
             client.dispose();
         }
+        System.out.println("111");
         try {
             client = new Client(this, "localhost");
         } catch (UnknownHostException ex) {
@@ -163,7 +164,10 @@ public class LoginForm extends javax.swing.JFrame implements Observer{
         if(client.startConnect())
         {
             btnLogin.setEnabled(false);
-            client.userController.login(nickName, password);
+            client.userController.login(username, password);
+            System.out.println("2222");
+        }else{
+            System.out.println("333");
         }
     }//GEN-LAST:event_btnLoginActionPerformed
 

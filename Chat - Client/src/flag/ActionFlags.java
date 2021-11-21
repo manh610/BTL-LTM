@@ -22,4 +22,6 @@ public class ActionFlags {
     public static final String NOTIFY_JUST_LEAVE_ROOM = "9";
     public static final String LOGOUT = "10";
     public static final String REGISTER = "11";
+    public static final String GET_ALL_USER = "12";
+    public static final String ERROR = "-1";
 }
