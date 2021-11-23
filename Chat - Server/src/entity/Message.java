@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 public class Message implements Serializable {
+
     private int id;
     private String content;
     private Date sendTime;
@@ -49,5 +50,10 @@ public class Message implements Serializable {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    @Override
+    public String toString() {
+        return sendTime + "-" + user.getDisplayName() + ":" + content;
     }
 }

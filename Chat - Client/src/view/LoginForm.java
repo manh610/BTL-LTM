@@ -155,7 +155,6 @@ public class LoginForm extends javax.swing.JFrame implements Observer{
         {
             client.dispose();
         }
-        System.out.println("111");
         try {
             client = new Client(this, "localhost");
         } catch (UnknownHostException ex) {
@@ -165,9 +164,6 @@ public class LoginForm extends javax.swing.JFrame implements Observer{
         {
             btnLogin.setEnabled(false);
             client.userController.login(username, password);
-            System.out.println("2222");
-        }else{
-            System.out.println("333");
         }
     }//GEN-LAST:event_btnLoginActionPerformed
 

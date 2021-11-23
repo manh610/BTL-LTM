@@ -26,7 +26,6 @@ public class Client extends Observable {
     public UserController userController;
     public HomeController homeController;
     private Thread thread;
-    public String nickname;
 
     public Client(Observer obs, String ipAddress) throws UnknownHostException {
         this.addObserver(obs);

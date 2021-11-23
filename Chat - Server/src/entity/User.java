@@ -74,4 +74,9 @@ public class User implements Serializable {
             username,active
         };
     }
+    
+    @Override
+    public String toString(){
+        return id + " " + username + " " + password + " " + getDisplayName() + " " + active;
+    }
 }

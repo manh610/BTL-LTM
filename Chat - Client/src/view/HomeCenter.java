@@ -11,6 +11,7 @@ import entity.Room;
 import entity.User;
 import flag.ActionFlags;
 import flag.ResultFlags;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
@@ -26,13 +27,13 @@ public class HomeCenter extends javax.swing.JFrame implements Observer {
     private Client client;
     private User user;
     private LoginForm loginForm;
+    private List<Room> listRoom;
+    private List<User> listUser;
 
     public HomeCenter(Client client, LoginForm loginForm, User user) {
         initComponents();
         this.client = client;
         this.client.addObserver(this);
-        this.client.homeController.getAllUser();
-        this.client.userController.getListRoom(user);
         this.loginForm = loginForm;
         this.user = user;
     }
@@ -49,33 +50,25 @@ public class HomeCenter extends javax.swing.JFrame implements Observer {
                     FillListUser((List<User>) response.getEntity());
                     break;
                 }
-                case ActionFlags.GET_LIST_ROOM:{
+                case ActionFlags.GET_LIST_ROOM: {
                     FillListRoom((List<Room>) response.getEntity());
                     break;
                 }
-
-//                case ActionFlags.CREATE_ROOM: {
-//                    client.deleteObservers();
-//                    RoomChat roomChat = new RoomChat(this, client, result.content, txtTenPhong.getText().trim(), 1);
-//                    roomChat.setVisible(true);
-//                    this.setVisible(false);
-//                    break;
-//                }
-//                case ActionFlags.JOIN_ROOM: {
-//                    int indexRow = tblListPhong.getSelectedRow();
-//                    if (indexRow < 0) {
-//                        JOptionPane.showMessageDialog(null, "Bạn chưa chọn phòng nào", "Chưa chọn phòng", JOptionPane.WARNING_MESSAGE);
-//                        return;
-//                    }
-//                    tbRoomsmaPhong = tblListPhong.getValueAt(indexRow, 0).toString();
-//                    String tenPhong = tblListPhong.getValueAt(indexRow, 1).toString();
-//                    int soNguoi = Integer.parseInt(tblListPhong.getValueAt(indexRow, 2).toString());
-//                    client.deleteObserver(this);
-//                    RoomChat roomChat = new RoomChat(this, client, maPhong, tenPhong, soNguoi + 1);
-//                    roomChat.setVisible(true);
-//                    this.setVisible(false);
-//                    break;
-//                }
+                case ActionFlags.OPEN_ROOM_CHAT:{
+                    Room room = (Room) response.getEntity();
+                    boolean opened = false;
+                    for (Integer roomId : client.userController.listRoomOpened) {
+                        if (roomId == room.getId()) {
+                            opened = true;
+                        }
+                    }
+                    if (!opened) {
+                        client.userController.listRoomOpened.add(room.getId());
+                        System.out.println(client.userController.listRoomOpened.size());
+                        RoomChat roomChat = new RoomChat(client, room, user, this);
+                        roomChat.setVisible(true);
+                    }
+                }
             }
         }
     }
@@ -83,16 +76,19 @@ public class HomeCenter extends javax.swing.JFrame implements Observer {
     public void FillListUser(List<User> listUser) {
         DefaultTableModel tm = (DefaultTableModel) tbUserOnline.getModel();
         tm.setRowCount(0);
-        for (User user : listUser) {
+        this.listUser = listUser;
+        listUser.forEach(user -> {
             tm.addRow(user.toObjects());
-        }
+        });
     }
+
     public void FillListRoom(List<Room> listRoom) {
-        DefaultTableModel tm = (DefaultTableModel) tbUserOnline.getModel();
+        DefaultTableModel tm = (DefaultTableModel) tbRooms.getModel();
         tm.setRowCount(0);
-        for (Room room: listRoom) {
+        this.listRoom = listRoom;
+        listRoom.forEach(room -> {
             tm.addRow(room.toObjects());
-        }
+        });
     }
 
     /**
@@ -115,7 +111,6 @@ public class HomeCenter extends javax.swing.JFrame implements Observer {
         tbUserOnline = new javax.swing.JTable();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
-        lbHello = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         setTitle("List Room");
@@ -142,6 +137,11 @@ public class HomeCenter extends javax.swing.JFrame implements Observer {
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 return canEdit [columnIndex];
+            }
+        });
+        tbRooms.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tbRoomsMouseClicked(evt);
             }
         });
         jScrollPane1.setViewportView(tbRooms);
@@ -187,13 +187,16 @@ public class HomeCenter extends javax.swing.JFrame implements Observer {
                 return canEdit [columnIndex];
             }
         });
+        tbUserOnline.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tbUserOnlineMouseClicked(evt);
+            }
+        });
         jScrollPane2.setViewportView(tbUserOnline);
 
         jLabel3.setText("Users online");
 
         jLabel4.setText("Rooms");
-
-        lbHello.setText("Hello ...");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -210,12 +213,8 @@ public class HomeCenter extends javax.swing.JFrame implements Observer {
                         .addGap(18, 18, 18)
                         .addComponent(btnCreateRoom, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(8, 8, 8)
-                                .addComponent(lbHello, javax.swing.GroupLayout.PREFERRED_SIZE, 251, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(135, 135, 135)
+                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(329, 329, 329)
                         .addComponent(jLabel1)))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
@@ -234,9 +233,7 @@ public class HomeCenter extends javax.swing.JFrame implements Observer {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(34, 34, 34)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(btnLogout, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(lbHello, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(btnLogout, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)))
@@ -261,25 +258,28 @@ public class HomeCenter extends javax.swing.JFrame implements Observer {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnCreateRoomActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCreateRoomActionPerformed
-        // TODO add your handling code here:
-//        String tenPhong = txtTenPhong.getText().trim();
-//        if (tenPhong.length() == 0) {
-//            JOptionPane.showMessageDialog(null, "Vui lòng nhập tên phòng", "Chưa nhập tên phòng", JOptionPane.WARNING_MESSAGE);
-//            txtTenPhong.requestFocus();
-//            return;
-//        }
-//        client.createRoom(tenPhong);
+        String roomName = txtRoomName.getText().trim();
+        if (roomName.length() == 0) {
+            JOptionPane.showMessageDialog(null, "Vui lòng nhập tên phòng", "Chưa nhập tên phòng", JOptionPane.WARNING_MESSAGE);
+            txtRoomName.requestFocus();
+            return;
+        }
+        txtRoomName.setText("");
+        Room room = new Room();
+        room.setDescription(roomName);
+        client.userController.createRoom(room);
     }//GEN-LAST:event_btnCreateRoomActionPerformed
 
     private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
         // TODO add your handling code here:
-//        client.getListRoom();
-//        this.setTitle("Xin chào " + client.nickname);
+        client.homeController.getAllUser();
+        client.userController.getListRoom();
+        this.setTitle("Xin chào " + user.getDisplayName());
     }//GEN-LAST:event_formWindowOpened
 
     private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
         // TODO add your handling code here:
-        client.userController.logout(user);
+        client.userController.logout();
         client.dispose();
         loginForm.setVisible(true);
         this.dispose();
@@ -288,7 +288,7 @@ public class HomeCenter extends javax.swing.JFrame implements Observer {
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         // TODO add your handling code here:
-        client.userController.logout(user);
+        client.userController.logout();
         client.dispose();
         System.exit(0);
     }//GEN-LAST:event_formWindowClosing
@@ -300,6 +300,31 @@ public class HomeCenter extends javax.swing.JFrame implements Observer {
 //        if (after.contains("<row>") || after.contains("<cotbRooms       evt.consume();
     }//GEN-LAST:event_txtRoomNameKeyTyped
 
+    private void tbRoomsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tbRoomsMouseClicked
+        // TODO add your handling code here:
+        int id = tbRooms.getSelectedRow();
+        Room room = listRoom.get(id);
+        boolean opened = false;
+        for (Integer roomId : client.userController.listRoomOpened) {
+            if (roomId == room.getId()) {
+                opened = true;
+            }
+        }
+        if (!opened) {
+            client.userController.listRoomOpened.add(room.getId());
+            System.out.println(client.userController.listRoomOpened.size());
+            RoomChat roomChat = new RoomChat(client, room, user, this);
+            roomChat.setVisible(true);
+        }
+    }//GEN-LAST:event_tbRoomsMouseClicked
+
+    private void tbUserOnlineMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tbUserOnlineMouseClicked
+        // TODO add your handling code here:
+        int id = tbUserOnline.getSelectedRow();
+        User user = listUser.get(id);
+        client.userController.createOrJoinPrivateRoom(user);
+    }//GEN-LAST:event_tbUserOnlineMouseClicked
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCreateRoom;
@@ -310,7 +335,6 @@ public class HomeCenter extends javax.swing.JFrame implements Observer {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JLabel lbHello;
     private javax.swing.JTable tbRooms;
     private javax.swing.JTable tbUserOnline;
     private javax.swing.JTextField txtRoomName;

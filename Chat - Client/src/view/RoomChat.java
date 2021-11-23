@@ -4,31 +4,99 @@
  * and open the template in the editor.
  */
 package view;
+
 import flag.ActionFlags;
 import java.util.Observable;
 import java.util.Observer;
 import core.Client;
-import core.Result;
+import entity.Message;
+import entity.Response;
+import entity.Room;
+import entity.User;
+import entity.UserRoom;
 import flag.ResultFlags;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+
 /**
  *
  * @author APC-LTN
  */
 public class RoomChat extends javax.swing.JFrame implements Observer {
-    Client mClientManager;
-    String mMaPhong = "";
-    String mTenPhong = "";
-    HomeCenter mListRoom;
-    int mSoNguoi = 1;
-    public RoomChat(HomeCenter listRoom, Client cm, String maPhong, String tenPhong, int soNguoi) {
+
+    private Client client;
+    private Room room;
+    private User user;
+    private HomeCenter homeCenter;
+    private List<User> listUser = new ArrayList<>();
+    
+    public RoomChat(Client client, Room room, User user, HomeCenter homeCenter) {
         initComponents();
-        mListRoom = listRoom;
-        mClientManager = cm;
-        mMaPhong = maPhong;
-        mTenPhong = tenPhong;
-        mSoNguoi = soNguoi;
-        mClientManager.addObserver(this);
+        this.client = client;
+        this.client.addObserver(this);
+        this.room = room;
+        this.user = user;
+        this.homeCenter = homeCenter;
+    }
+
+    @Override
+    public void update(Observable o, Object arg) {
+        Response response = (Response) arg;
+        if (response.getResultType().equals(ResultFlags.ERROR)) {
+            JOptionPane.showMessageDialog(null, response.getContent(), "Thất bại", JOptionPane.ERROR_MESSAGE);
+        } else {
+            switch (response.getActionType()) {
+                case ActionFlags.SEND_MESSAGE: {
+                    Message message = (Message) response.getEntity();
+                    if (message.getUser().getDisplayName().equals(user.getDisplayName())) {
+                        txtConversation.append(message.getSendTime().toString() + "- You: " + message.getContent() + "\n");
+                    } else {
+                        txtConversation.append(message.toString() + "\n");
+                    }
+                    break;
+                }
+//            case ActionFlags.UPDATE_NUMBER_USER: {
+//                String soNguoi = result.content;
+//                mSoNguoi = Integer.parseInt(soNguoi);
+//                this.setTitle("Nickname: " + client.nickname + "      Tên phòng: " + mTenPhong + "     Mã Phòng: " + mMaPhong + "     Số người: " + mSoNguoi);
+//                break;
+//            }
+//            case ActionFlags.NOTIFY_JUST_JOIN_ROOM: {
+//                String userJoin = result.content;
+//                txtConversation.append("<" + userJoin + "> vừa tham gia phòng\n");
+//                break;
+//            }
+//            case ActionFlags.NOTIFY_JUST_LEAVE_ROOM: {
+//                String userJoin = result.content;
+//                txtConversation.append("<" + userJoin + "> vừa rời phòng\n");
+//                break;
+//            }
+//        }
+            }
+        }
+    }
+    
+    private void FillListUser(Room room){
+        DefaultTableModel tm = (DefaultTableModel) tbMembers.getModel();
+        tm.setRowCount(0);
+        listUser.clear();
+        room.getListUserRoom().stream().map(userRoom -> userRoom.getUser()).forEachOrdered(userr -> {
+            tm.addRow(userr.toObjects());
+            listUser.add(userr);
+        });
+    }
+    
+    private void FillMessages(Room room) {
+        room.getListMessage().forEach(message -> {
+            if (message.getUser().getDisplayName().equals(user.getDisplayName())) {
+                txtConversation.append(message.getSendTime() + "- You: " + message.getContent() + "\n");
+            } else {
+                txtConversation.append(message.toString() + "\n");
+            }
+        });
     }
 
     /**
@@ -171,74 +239,42 @@ public class RoomChat extends javax.swing.JFrame implements Observer {
 
     private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
         // TODO add your handling code here:
-        this.setTitle("Nickname: " + mClientManager.nickname + "      Tên phòng: " + mTenPhong + "     Mã Phòng: " + mMaPhong + "     Số người: " + mSoNguoi);
+        this.setTitle("Nickname: " + user.getDisplayName() + " Tên phòng: " + room.getDescription() + " Số người: " + room.getListUserRoom().size());
+        FillMessages(room);
+        FillListUser(room);
     }//GEN-LAST:event_formWindowOpened
 
     private void btnSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSendActionPerformed
         // TODO add your handling code here:
-        if(txtChat.getText().trim().length()==0)
+        if (txtChat.getText().trim().length() == 0) {
+            JOptionPane.showMessageDialog(null, "Vui lòng nhập tin nhắn", "Chưa nhập tin nhắn", JOptionPane.WARNING_MESSAGE);
+            txtChat.requestFocus();
             return;
-        mClientManager.sendMessage(txtChat.getText().trim());
+        }
+        Message message = new Message();
+        message.setContent(txtChat.getText());
         txtChat.setText("");
+        message.setUser(user);
+        message.setSendTime(new Date());
+        List<Message> messages = room.getListMessage();
+        messages.add(message);
+        room.setListMessage(messages);
+        client.userController.sendMessage(room);
     }//GEN-LAST:event_btnSendActionPerformed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         // TODO add your handling code here:
-        mClientManager.leaveRoom();
-        mClientManager.deleteObserver(this);
-        mClientManager.addObserver(mListRoom);
-        mListRoom.setVisible(true);
+//        client.leaveRoom();
+        client.userController.listRoomOpened.remove((Integer)room.getId());
+        System.out.println(client.userController.listRoomOpened.size());
+        client.deleteObserver(this);
+//        client.addObserver(homeCenter);
+//        homeCenter.setVisible(true);
     }//GEN-LAST:event_formWindowClosing
 
     /**
      * @param args the command line arguments
      */
-
-    @Override
-    public void update(Observable o, Object arg) 
-    {
-        Result result = (Result)arg;
-        
-        if(result.resultFlags.equals(ResultFlags.ERROR))
-        {
-            JOptionPane.showMessageDialog(null, result.content, "Thất bại", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        switch (result.actionFlags)
-        {
-            case ActionFlags.SEND_MESSAGE:
-            {
-                String[] lines = result.content.split(";", -1);
-                String sender = lines[0];
-                String messContent = lines[1];
-                messContent = messContent.replaceAll("<br>", "\n");  //khi tin nhắn gửi đi đã thay ký tự xuống dòng bằng <br> nên khi nhận về thì thay ngược lại
-                if(sender.equals(mClientManager.nickname))
-                    txtConversation.append("You: " + messContent + "\n");
-                else
-                    txtConversation.append(sender + ": " + messContent + "\n");
-                break;
-            }
-            case ActionFlags.UPDATE_NUMBER_USER:
-            {
-                String soNguoi = result.content;
-                mSoNguoi = Integer.parseInt(soNguoi);
-                this.setTitle("Nickname: " + mClientManager.nickname + "      Tên phòng: " + mTenPhong + "     Mã Phòng: " + mMaPhong + "     Số người: " + mSoNguoi);
-                break;
-            }
-            case ActionFlags.NOTIFY_JUST_JOIN_ROOM:
-            {
-                String userJoin = result.content;
-                txtConversation.append("<" + userJoin + "> vừa tham gia phòng\n" );
-                break;
-            }
-            case ActionFlags.NOTIFY_JUST_LEAVE_ROOM:
-            {
-                String userJoin = result.content;
-                txtConversation.append("<" + userJoin + "> vừa rời phòng\n" );
-                break;
-            }
-        }
-    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnSend;

@@ -5,9 +5,12 @@
  */
 package core;
 
-import controller.UserController;
+import controller.UserWorker;
+import entity.Message;
 import entity.Request;
+import entity.Room;
 import entity.User;
+import entity.UserRoom;
 import flag.ActionFlags;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -18,7 +21,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 /**
  *
  * @author APC-LTN
@@ -26,8 +28,7 @@ import java.util.logging.Logger;
 public class Server {
 
     private static final int port = 11000;
-    private static List<UserController> userControllers = new ArrayList<>();
-    private static List<UserController> userWaitLogout = new ArrayList<>();
+    private static final List<UserWorker> userControllers = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
         ServerSocket serverSocket = new ServerSocket(port);
@@ -44,7 +45,7 @@ public class Server {
     private static class Handler extends Thread {
 
         private Socket socket;
-        private UserController userController;
+        private UserWorker userController;
 
         public Handler(Socket socket) {
             this.socket = socket;
@@ -53,7 +54,7 @@ public class Server {
         @Override
         public void run() {
             try {
-                userController = new UserController(socket);
+                userController = new UserWorker(socket);
                 userControllers.add(userController);
                 System.out.println(socket.getLocalAddress() + " da ket noi" + userControllers.size());
 
@@ -68,14 +69,11 @@ public class Server {
                 }
             } catch (IOException ex) {
                 ex.printStackTrace();
-            } catch (SQLException ex) {
-                Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ClassNotFoundException ex) {
+            } catch (SQLException | ClassNotFoundException ex) {
                 Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
             } finally {
 //                userController.logOut(user, ActionFlags.LOGOUT);
                 userControllers.remove(userController);
-                userController.userDAO.closeConnection();
                 try {
                     socket.close();
                 } catch (IOException e) {
@@ -83,28 +81,49 @@ public class Server {
             }
         }
 
-        private static void sendListAllUser() {
+        private static void sendListUserHome() {
             for (int i = 0; i < userControllers.size(); i++) {
-                UserController uc = userControllers.get(i);
+                UserWorker uc = userControllers.get(i);
                 uc.getAllUser();
                 System.out.println("Gui danh sach user cho user " + i);
             }
         }
+        
+        private static void sendListUserRoom() {
+            for (int i = 0; i < userControllers.size(); i++) {
+                UserWorker uc = userControllers.get(i);
+                uc.getAllUser();
+                System.out.println("Gui danh sach user cho user " + i);
+            }
+        }
+        
+        private static void sendMessageToAll(Room room, Message message) {
+              
+            for (UserRoom userRoom: room.getListUserRoom()) {
+                for (int i = 0; i < userControllers.size(); i++) {
+                    UserWorker uc = userControllers.get(i);
+                    if (uc.userc.getId() == userRoom.getUser().getId()) {
+                        uc.openRoomChat(room, ActionFlags.OPEN_ROOM_CHAT);
+                        uc.sendMessage(message, ActionFlags.SEND_MESSAGE);
+                    }
+                }
+            }
 
-        private static void checkRequest(UserController uc) throws ClassNotFoundException, IOException {
+        }
+
+        private static void checkRequest(UserWorker uc) throws ClassNotFoundException, IOException {
             Request request = (Request) uc.objectInputStream.readObject();
             processRequest(uc, request);
         }
 
-        private static void processRequest(UserController userController, Request request) throws IOException {
+        private static void processRequest(UserWorker userController, Request request) throws IOException {
             String actionType = request.getActionType();
             System.out.println(actionType + " " + request.toString());
             switch (actionType) {
                 case ActionFlags.LOGIN: {
                     User user = (User) request.getEntity();
-                    if (userController.checkLogin(user, actionType)) {
-                        System.out.println("Thanh Cong");
-                    }
+                    userController.checkLogin(user.getUsername(), user.getPassword(), actionType);
+                    sendListUserHome();
                     break;
                 }
                 case ActionFlags.REGISTER: {
@@ -113,36 +132,48 @@ public class Server {
                     break;
                 }
                 case ActionFlags.LOGOUT: {
-                    User user = (User) request.getEntity();
-                    userController.logOut(user, actionType);
+                    userController.logout();
                     userController.objectInputStream = null;
                     userController.objectOutputStream = null;
-                    if(userControllers.remove(userController))
-                        sendListAllUser();
-//                notifyObservers(user.getUsername() + " vừa đăng xuất");
+                    if (userControllers.remove(userController)) {
+                        sendListUserHome();
+                    }
                     break;
                 }
-                case ActionFlags.GET_ALL_USER: {
-                    sendListAllUser();
+                case ActionFlags.CREATE_ROOM: {
+                    Room room = (Room) request.getEntity();
+                    userController.createRoomByUser(room, actionType);
                     break;
                 }
-//            case ActionFlags.CREATE_ROOM: {
-//                String roomName = lines[1];
-//                RoomController room = generalRoom(roomName);
-//                listRoom.add(room);
-//                user.room = room;
-//                if (user.send(actionType, ResultFlags.OK, room.roomID)) {
-//                    room.addUser(user);
-//                }
-//                notifyObservers(user.nickName + " vừa tạo phòng " + roomName);
-//                break;
-//            }
-            case ActionFlags.GET_LIST_ROOM: {
-                User user = (User) request.getEntity();
-                userController.getListRoom(user);
-                System.out.println("Gui danh sach phong cho user");
-                break;
-            }
+                case ActionFlags.GET_LIST_ROOM: {
+                    userController.getListRoom();
+                    System.out.println("Gui danh sach phong cho user");
+                    break;
+                }
+
+                case ActionFlags.CREATE_OR_JOIN_PRIVATE_ROOM: {
+                    User user = (User) request.getEntity();
+                    Room room = userController.checkExistsPrivateRoom(user);
+                    if (room != null) {
+                        // open view chat
+                        userController.openRoomChat(room, ActionFlags.OPEN_ROOM_CHAT);
+                        userController.getListRoom();
+                    }
+                    break;
+                }
+                
+                case ActionFlags.SEND_MESSAGE: {
+                    Room room = (Room) request.getEntity();
+                    List<Message> messages = room.getListMessage();
+                    Message rmessage = userController.createMessage(messages.get(messages.size() - 1), room.getId());
+                    if (rmessage != null) {
+                        room = userController.getRoom(room);
+                        if(room != null)
+                            sendMessageToAll(room, rmessage);
+                    }
+                    break;
+                }
+                
 //            case ActionFlags.JOIN_ROOM: {
 //                String roomID = lines[1];
 //                int size = listRoom.size();
@@ -166,15 +197,7 @@ public class Server {
 //
 //                break;
 //            }
-//            case ActionFlags.SEND_MESSAGE: {
-//                String contentMess = "";
-//                if (lines.length >= 2) {
-//                    contentMess = lines[1];
-//                }
-//                user.room.sendToAllUser(user.nickName, contentMess);
-//                notifyObservers(user.nickName + " vừa gửi tin");
-//                break;
-//            }
+
 //            case ActionFlags.LEAVE_ROOM: {
 //                RoomController room = user.room;
 //                room.removeUser(user);

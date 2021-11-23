@@ -23,5 +23,10 @@ public class ActionFlags {
     public static final String LOGOUT = "10";
     public static final String REGISTER = "11";
     public static final String GET_ALL_USER = "12";
+    public static final String CREATE_OR_JOIN_PRIVATE_ROOM = "13";
+    public static final String GET_ALL_MESSAGE = "14";
+    public static final String UPDATE_USERS_ROOM = "15";
+    public static final String OPEN_ROOM_CHAT = "16";
     public static final String ERROR = "-1";
+    
 }
