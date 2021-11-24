@@ -189,7 +189,7 @@ public class RegisterForm extends javax.swing.JFrame implements Observer {
                 if(client!=null){
                     client.dispose();
                 }
-                client = new Client(this, "localhost");
+                client = new Client(this);
                 if (client.startConnect()) {
                     btnSignup.setEnabled(false);
                     client.userController.register(user);

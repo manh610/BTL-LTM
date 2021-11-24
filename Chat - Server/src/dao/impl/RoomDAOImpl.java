@@ -33,7 +33,7 @@ public class RoomDAOImpl extends DAO implements RoomDAO {
     @Override
     public List<Room> getListRoomByUserId(User user) {
         List<Room> listRoom = new ArrayList<>();
-        String sql = "SELECT room.ID, room.Description "
+        String sql = "SELECT room.ID, room.Description, room.Type "
                 + "FROM room, userroom, user "
                 + "WHERE user.ID = ? "
                 + "AND user.ID = userroom.UserID "
@@ -48,6 +48,7 @@ public class RoomDAOImpl extends DAO implements RoomDAO {
                 Room room = new Room();
                 room.setId(rs.getInt("ID"));
                 room.setDescription(rs.getString("Description"));
+                room.setType(rs.getString("Type"));
                 room.setListMessage(messageDAO.selectByRoomId(room.getId()));
                 room.setListUserRoom(userRoomDAO.selectListUserRoomByRoomId(room.getId()));
                 listRoom.add(room);
@@ -66,13 +67,14 @@ public class RoomDAOImpl extends DAO implements RoomDAO {
 
     @Override
     public Room createRoomByUsers(Room room, List<User> listUser) {
-        String sql = "INSERT INTO Room (Description) VALUES (?)";
+        String sql = "INSERT INTO Room (Description,Type) VALUES (?,?)";
         String sql2 = "SELECT MAX(ID) FROM ROOM";
         boolean flag = false;
         try {
             super.connect();
             PreparedStatement statement = jdbcConnection.prepareStatement(sql);
             statement.setString(1, room.getDescription());
+            statement.setString(2, room.getType());
             flag = statement.executeUpdate() > 0;
             if (flag) {
                 Statement statement1 = jdbcConnection.createStatement();
@@ -80,7 +82,6 @@ public class RoomDAOImpl extends DAO implements RoomDAO {
                 if (resultSet.next()) {
                     room.setId(resultSet.getInt("MAX(ID)"));
                     for (User user : listUser) {
-                        System.out.println(user.toString());
                         flag = userRoomDAO.createUserRoom(user.getId(), room.getId());
                         if (!flag) {
                             return null;
@@ -108,6 +109,7 @@ public class RoomDAOImpl extends DAO implements RoomDAO {
                 room = new Room();
                 room.setId(rs.getInt("ID"));
                 room.setDescription(rs.getString("Description"));
+                room.setType(rs.getString("Type"));
                 room.setListMessage(messageDAO.selectByRoomId(room.getId()));
                 room.setListUserRoom(userRoomDAO.selectListUserRoomByRoomId(room.getId()));
             }

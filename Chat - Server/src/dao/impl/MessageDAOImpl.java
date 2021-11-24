@@ -74,6 +74,7 @@ public class MessageDAOImpl extends DAO implements MessageDAO {
             while (rs.next()) {
                 Message message = new Message();
                 message.setId(rs.getInt("ID"));
+                message.setRoomId(roomId);
                 message.setUser(userDAO.selectById(rs.getInt("UserID")));
                 message.setContent(rs.getString("Content"));
                 message.setSendTime(rs.getDate("SendTime"));
@@ -107,7 +108,6 @@ public class MessageDAOImpl extends DAO implements MessageDAO {
                     message.setId(resultSet.getInt("MAX(ID)"));
                     message.setUser(userDAO.selectById(userId));
                 }
-                System.out.println(message.toString());
             }else{
                 return null;
             }

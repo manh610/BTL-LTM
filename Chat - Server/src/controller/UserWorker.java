@@ -8,9 +8,11 @@ package controller;
 import dao.MessageDAO;
 import dao.RoomDAO;
 import dao.UserDAO;
+import dao.UserRoomDAO;
 import dao.impl.MessageDAOImpl;
 import dao.impl.RoomDAOImpl;
 import dao.impl.UserDAOImpl;
+import dao.impl.UserRoomDAOImpl;
 import entity.Message;
 import entity.Response;
 import entity.Room;
@@ -35,12 +37,10 @@ public class UserWorker {
 
     public ObjectOutputStream objectOutputStream;
     public ObjectInputStream objectInputStream;
-    private static String DB_URL = "jdbc:mysql://localhost:3306/btl_ltm";
-    private static String USER_NAME = "root";
-    private static String PASSWORD = "123456";
     public UserDAO userDAO;
     public RoomDAO roomDAO;
     public MessageDAO messageDAO;
+    public UserRoomDAO userRoomDAO;
     public Socket socket;
     public User userc;
     
@@ -51,6 +51,7 @@ public class UserWorker {
         this.userDAO = new UserDAOImpl();
         this.roomDAO = new RoomDAOImpl();
         this.messageDAO = new MessageDAOImpl();
+        this.userRoomDAO = new UserRoomDAOImpl();
         this.userc = new User();
     }
 
@@ -81,19 +82,25 @@ public class UserWorker {
         }
     }
 
-    public void getListRoom() {
+    public List<Room> getListRoomByUser() {
         List<Room> listRoom = roomDAO.getListRoomByUserId(userc);
         if (listRoom != null) {
             Response response = new Response(ActionFlags.GET_LIST_ROOM, ResultFlags.OK, "OK", listRoom);
             send(response);
         }
+        return listRoom;
     }
     
-    public Room getRoom(Room room){
-        return roomDAO.getRoomById(room.getId());
+    public Room getRoom(int roomId){
+        return roomDAO.getRoomById(roomId);
     }
     
-    public void getAllUser() {
+    public void sendListUserRoom(Room room){
+        Response response = new Response(ActionFlags.UPDATE_USERS_ROOM, ResultFlags.OK, "OK", room);
+        send(response);
+    }
+    
+    public void sendListUserHome() {
         List<User> listUser = userDAO.selectAll();
         if (listUser != null) {
             Response response = new Response(ActionFlags.GET_ALL_USER, ResultFlags.OK, "", listUser);
@@ -105,7 +112,38 @@ public class UserWorker {
         List<User> listUser = new ArrayList<>();
         listUser.add(userc);
         if(roomDAO.createRoomByUsers(room, listUser) != null){
-            getListRoom();
+            getListRoomByUser();
+        }
+    }
+    
+    private boolean checkExistsUserRoom(User user, Room room){
+        if (room.getListUserRoom().stream().anyMatch(userRoom -> (user.getId() ==  userRoom.getUser().getId()))) {
+            return true;
+        }
+        return false;
+    }
+    
+    public void addUserToRoom(UserRoom userRoom){
+        Room room = getRoom(userRoom.getRoomId());
+        if(checkExistsUserRoom(userRoom.getUser(), room)){
+            Response response = new Response(ActionFlags.ADD_USER_TO_ROOM, ResultFlags.ERROR, "User đã có trong Room", null);
+            send(response);
+            return;
+        }
+        if(room.getType().equals("private")){ // tao phong moi
+            List<User> listUser = new ArrayList<>();
+            listUser.add(userRoom.getUser());
+            room.getListUserRoom().forEach(userRoomm -> {
+                listUser.add(userRoomm.getUser());
+            });
+            Room newRoom = room;
+            newRoom.setType("public");
+            newRoom.setDescription("");
+            newRoom = roomDAO.createRoomByUsers(newRoom, listUser);
+            openRoomChat(getRoom(newRoom.getId()), ActionFlags.OPEN_ROOM_CHAT);
+        }else{
+            userRoomDAO.createUserRoom(userRoom.getUser().getId(), userRoom.getRoomId());
+            sendListUserRoom(getRoom(room.getId()));
         }
     }
     
@@ -146,16 +184,16 @@ public class UserWorker {
             listUser.add(userc);
             listUser.add(user);
             Room room = new Room();
-            room.setDescription("Room chat cua: " + user.getDisplayName() + " va" + userc.getDisplayName());
+            room.setDescription("Room chat cua: " + user.getDisplayName() + " va " + userc.getDisplayName());
+            room.setType("private");
             room = roomDAO.createRoomByUsers(room, listUser);
             return room;
         }
         return null;
     }
     
-    public Message createMessage(Message message, int roomId){
-        System.out.println(message.toString() + " " + roomId);
-        return messageDAO.insertMessage(message, userc.getId(), roomId);
+    public Message createMessage(Message message){
+        return messageDAO.insertMessage(message, userc.getId(), message.getRoomId());
     }
     
 }

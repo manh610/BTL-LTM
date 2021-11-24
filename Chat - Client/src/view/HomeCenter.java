@@ -65,7 +65,7 @@ public class HomeCenter extends javax.swing.JFrame implements Observer {
                     if (!opened) {
                         client.userController.listRoomOpened.add(room.getId());
                         System.out.println(client.userController.listRoomOpened.size());
-                        RoomChat roomChat = new RoomChat(client, room, user, this);
+                        RoomChat roomChat = new RoomChat(client, room, user);
                         roomChat.setVisible(true);
                     }
                 }
@@ -272,8 +272,6 @@ public class HomeCenter extends javax.swing.JFrame implements Observer {
 
     private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
         // TODO add your handling code here:
-        client.homeController.getAllUser();
-        client.userController.getListRoom();
         this.setTitle("Xin chào " + user.getDisplayName());
     }//GEN-LAST:event_formWindowOpened
 
@@ -313,7 +311,7 @@ public class HomeCenter extends javax.swing.JFrame implements Observer {
         if (!opened) {
             client.userController.listRoomOpened.add(room.getId());
             System.out.println(client.userController.listRoomOpened.size());
-            RoomChat roomChat = new RoomChat(client, room, user, this);
+            RoomChat roomChat = new RoomChat(client, room, user);
             roomChat.setVisible(true);
         }
     }//GEN-LAST:event_tbRoomsMouseClicked

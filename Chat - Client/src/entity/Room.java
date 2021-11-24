@@ -4,10 +4,12 @@ import java.io.Serializable;
 import java.util.List;
 
 public class Room implements Serializable {
+
     private int id;
     private String description;
     private List<UserRoom> listUserRoom;
     private List<Message> listMessage;
+    private String type;
 
     public Room() {
     }
@@ -17,6 +19,22 @@ public class Room implements Serializable {
         this.description = description;
         this.listUserRoom = listUserRoom;
         this.listMessage = listMessage;
+    }
+
+    public Room(int id, String description, List<UserRoom> listUserRoom, List<Message> listMessage, String type) {
+        this.id = id;
+        this.description = description;
+        this.listUserRoom = listUserRoom;
+        this.listMessage = listMessage;
+        this.type = type;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public int getId() {
@@ -50,7 +68,7 @@ public class Room implements Serializable {
     public void setListMessage(List<Message> listMessage) {
         this.listMessage = listMessage;
     }
-    
+
     public Object[] toObjects() {
         return new Object[]{
             description, listUserRoom.size()

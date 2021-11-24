@@ -14,7 +14,7 @@ import java.io.Serializable;
 public class Request implements Serializable{
     private String actionType;
     private Object entity;
-
+    
     public Request(String actionType, Object entity) {
         this.actionType = actionType;
         this.entity = entity;

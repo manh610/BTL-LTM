@@ -18,18 +18,17 @@ import java.util.logging.Logger;
 
 public class Client extends Observable {
 
-    String serverName;
-    int port = 11000;
-    Socket socket;
+    private static final String serverIp = "26.9.88.107";
+    private static final int port = 11000;
+    private Socket socket;
     private ObjectOutputStream objectOutputStream;
     private ObjectInputStream objectInputStream;
     public UserController userController;
     public HomeController homeController;
     private Thread thread;
 
-    public Client(Observer obs, String ipAddress) throws UnknownHostException {
+    public Client(Observer obs) throws UnknownHostException {
         this.addObserver(obs);
-        this.serverName = ipAddress;
         System.out.println(InetAddress.getLocalHost().getHostAddress());
     }
 
@@ -54,7 +53,7 @@ public class Client extends Observable {
 
     public boolean startConnect() {
         try {
-            socket = new Socket(serverName, port);
+            socket = new Socket(serverIp, port);
             objectInputStream = new ObjectInputStream(socket.getInputStream());
             objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             userController = new UserController(objectOutputStream);
@@ -68,7 +67,7 @@ public class Client extends Observable {
         }
     }
 
-    void startThreadWaitResult() {
+    private void startThreadWaitResult() {
         thread = new Thread(new Runnable() {
             @Override
             public void run() {

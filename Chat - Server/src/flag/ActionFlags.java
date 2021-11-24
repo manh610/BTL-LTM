@@ -28,5 +28,6 @@ public class ActionFlags {
     public static final String GET_ALL_MESSAGE = "14";
     public static final String UPDATE_USERS_ROOM = "15";
     public static final String OPEN_ROOM_CHAT = "16";
+    public static final String ADD_USER_TO_ROOM = "17";
     public static final String ERROR = "-1";
 }

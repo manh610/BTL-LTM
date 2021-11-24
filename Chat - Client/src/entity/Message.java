@@ -5,6 +5,7 @@ import java.util.Date;
 
 public class Message implements Serializable {
     private int id;
+    private int roomId;
     private String content;
     private Date sendTime;
     private User user;
@@ -19,6 +20,22 @@ public class Message implements Serializable {
         this.user = user;
     }
 
+    public Message(int id, int roomId, String content, Date sendTime, User user) {
+        this.id = id;
+        this.roomId = roomId;
+        this.content = content;
+        this.sendTime = sendTime;
+        this.user = user;
+    }
+
+    public int getRoomId() {
+        return roomId;
+    }
+
+    public void setRoomId(int roomId) {
+        this.roomId = roomId;
+    }
+    
     public int getId() {
         return id;
     }

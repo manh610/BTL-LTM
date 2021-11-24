@@ -156,7 +156,7 @@ public class LoginForm extends javax.swing.JFrame implements Observer{
             client.dispose();
         }
         try {
-            client = new Client(this, "localhost");
+            client = new Client(this);
         } catch (UnknownHostException ex) {
             Logger.getLogger(LoginForm.class.getName()).log(Level.SEVERE, null, ex);
         }

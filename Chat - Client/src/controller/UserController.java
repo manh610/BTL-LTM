@@ -9,6 +9,7 @@ import entity.Message;
 import entity.Request;
 import entity.Room;
 import entity.User;
+import entity.UserRoom;
 import flag.ActionFlags;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -23,9 +24,8 @@ public class UserController {
 
     private final ObjectOutputStream objectOutputStream;
 
-    
     public List<Integer> listRoomOpened = new ArrayList<>();
-            
+
     public UserController(ObjectOutputStream objectOutputStream) {
         this.objectOutputStream = objectOutputStream;
     }
@@ -51,14 +51,18 @@ public class UserController {
         send(request);
     }
 
+    public void geListUser() {
+        Request request = new Request(ActionFlags.GET_ALL_USER, null);
+        send(request);
+    }
+
     public void logout() {
         Request request = new Request(ActionFlags.LOGOUT, null);
         send(request);
     }
 
-    public void sendMessage(Room room) {
-        Request request = new Request(ActionFlags.SEND_MESSAGE, room);
-        System.out.println(room.getListMessage().size());
+    public void sendMessage(Message message) {
+        Request request = new Request(ActionFlags.SEND_MESSAGE, message);
         send(request);
     }
 
@@ -81,12 +85,12 @@ public class UserController {
         Request request = new Request(ActionFlags.CREATE_OR_JOIN_PRIVATE_ROOM, user);
         send(request);
     }
-//
-//    public void joinRoom(String maPhong) {
-//        String line = ActionFlags.JOIN_ROOM + ";" + maPhong;
-//        send(line);
-//    }
-//
+
+    public void addUserToRoom(UserRoom userRoom) {
+        Request request = new Request(ActionFlags.ADD_USER_TO_ROOM, userRoom);
+        send(request);
+    }
+
 //    public void leaveRoom() {
 //        String line = ActionFlags.LEAVE_ROOM + ";null";
 //        send(line);
