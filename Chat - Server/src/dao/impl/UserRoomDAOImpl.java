@@ -90,4 +90,20 @@ public class UserRoomDAOImpl extends DAO implements UserRoomDAO {
         }
     }
 
+    @Override
+    public boolean deleteById(int userRoomId) {
+        String sql = "Delete from USERROOM where ID = ?";
+        boolean flag = false;
+        try {
+            super.connect();
+            PreparedStatement statement = jdbcConnection.prepareStatement(sql);
+            statement.setInt(1, userRoomId);
+            flag = statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            return flag;
+        }
+    }
+
 }

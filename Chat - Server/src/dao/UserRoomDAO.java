@@ -16,4 +16,5 @@ public interface UserRoomDAO {
     
     public List<UserRoom> selectListUserRoomByRoomId(int roomId);
     public boolean createUserRoom(int userId, int roomId);
+    public boolean deleteById(int userRoomId);
 }

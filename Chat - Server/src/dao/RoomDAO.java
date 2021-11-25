@@ -18,4 +18,5 @@ public interface RoomDAO {
     public List<Room> getListRoomByUserId(User user);
     public Room createRoomByUsers(Room room, List<User> listUser);
     public Room getRoomById(int roomId);
+    public boolean updateRoom(Room room);
 }

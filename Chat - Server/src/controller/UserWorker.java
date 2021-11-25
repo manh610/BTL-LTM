@@ -43,7 +43,7 @@ public class UserWorker {
     public UserRoomDAO userRoomDAO;
     public Socket socket;
     public User userc;
-    
+
     public UserWorker(Socket socket) throws SQLException, IOException {
         this.socket = socket;
         this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
@@ -90,16 +90,16 @@ public class UserWorker {
         }
         return listRoom;
     }
-    
-    public Room getRoom(int roomId){
+
+    public Room getRoom(int roomId) {
         return roomDAO.getRoomById(roomId);
     }
-    
-    public void sendListUserRoom(Room room){
+
+    public void sendListUserRoom(Room room) {
         Response response = new Response(ActionFlags.UPDATE_USERS_ROOM, ResultFlags.OK, "OK", room);
         send(response);
     }
-    
+
     public void sendListUserHome() {
         List<User> listUser = userDAO.selectAll();
         if (listUser != null) {
@@ -107,30 +107,42 @@ public class UserWorker {
             send(response);
         }
     }
-    
-    public void createRoomByUser(Room room, String actionType){
+
+    public Room updateRoom(Room room) {
+        if (roomDAO.updateRoom(room) != false) {
+            Room roomUpdated = roomDAO.getRoomById(room.getId());
+            Response response = new Response(ActionFlags.UPDATE_ROOM, ResultFlags.OK, "", roomUpdated);
+            send(response);
+            return roomUpdated;
+        } else {
+            return null;
+        }
+    }
+
+    public void createRoomByUser(Room room, String actionType) {
         List<User> listUser = new ArrayList<>();
         listUser.add(userc);
-        if(roomDAO.createRoomByUsers(room, listUser) != null){
+        if (roomDAO.createRoomByUsers(room, listUser) != null) {
             getListRoomByUser();
         }
     }
-    
-    private boolean checkExistsUserRoom(User user, Room room){
-        if (room.getListUserRoom().stream().anyMatch(userRoom -> (user.getId() ==  userRoom.getUser().getId()))) {
+
+    private boolean checkExistsUserRoom(User user, Room room) {
+        if (room.getListUserRoom().stream().anyMatch(userRoom -> (user.getId() == userRoom.getUser().getId()))) {
             return true;
         }
         return false;
     }
-    
-    public void addUserToRoom(UserRoom userRoom){
+
+    public Room addUserToRoom(UserRoom userRoom) {
+        Room result;
         Room room = getRoom(userRoom.getRoomId());
-        if(checkExistsUserRoom(userRoom.getUser(), room)){
+        if (checkExistsUserRoom(userRoom.getUser(), room)) {
             Response response = new Response(ActionFlags.ADD_USER_TO_ROOM, ResultFlags.ERROR, "User đã có trong Room", null);
             send(response);
-            return;
+            return null;
         }
-        if(room.getType().equals("private")){ // tao phong moi
+        if (room.getType().equals("private")) { // tao phong moi
             List<User> listUser = new ArrayList<>();
             listUser.add(userRoom.getUser());
             room.getListUserRoom().forEach(userRoomm -> {
@@ -140,13 +152,25 @@ public class UserWorker {
             newRoom.setType("public");
             newRoom.setDescription("");
             newRoom = roomDAO.createRoomByUsers(newRoom, listUser);
-            openRoomChat(getRoom(newRoom.getId()), ActionFlags.OPEN_ROOM_CHAT);
-        }else{
+            openRoomChat(result = getRoom(newRoom.getId()), ActionFlags.OPEN_ROOM_CHAT);
+        } else {
             userRoomDAO.createUserRoom(userRoom.getUser().getId(), userRoom.getRoomId());
-            sendListUserRoom(getRoom(room.getId()));
+            sendListUserRoom(result = getRoom(room.getId()));
         }
+        return result;
     }
-    
+
+    public Room LeaveRoom(UserRoom userRoom, String actionType) {
+        if (userRoomDAO.deleteById(userRoom.getId())) {
+            Room room = getRoom(userRoom.getRoomId());
+            getListRoomByUser();
+            return room;
+        } else {
+            return null;
+        }
+
+    }
+
     public void checkRegister(User user, String actionType) {
         if (!userDAO.checkExistsUser(user.getUsername())) {
             userDAO.insert(user);
@@ -157,23 +181,23 @@ public class UserWorker {
             send(response);
         }
     }
-    
-    public void openRoomChat(Room room, String actionType){
+
+    public void openRoomChat(Room room, String actionType) {
         Response response = new Response(actionType, ResultFlags.OK, "OK", room);
         send(response);
     }
-    
-    public void sendMessage(Message message, String actionType){
+
+    public void sendMessage(Message message, String actionType) {
         Response response = new Response(actionType, ResultFlags.OK, "OK", message);
         send(response);
     }
-    
-    public Room checkExistsPrivateRoom(User user){
+
+    public Room checkExistsPrivateRoom(User user) {
         List<Room> listRoom = roomDAO.getListRoomByUserId(userc);
         if (listRoom != null) {
-            for(Room room: listRoom){
+            for (Room room : listRoom) {
                 List<UserRoom> lur = room.getListUserRoom();
-                if(lur.size() == 2 && (lur.get(0).getUser().getId() == user.getId() || lur.get(1).getUser().getId() == user.getId())){
+                if (lur.size() == 2 && (lur.get(0).getUser().getId() == user.getId() || lur.get(1).getUser().getId() == user.getId())) {
                     // da ton tai -> send
                     System.out.println("Da ton tai");
                     return room;
@@ -191,9 +215,9 @@ public class UserWorker {
         }
         return null;
     }
-    
-    public Message createMessage(Message message){
+
+    public Message createMessage(Message message) {
         return messageDAO.insertMessage(message, userc.getId(), message.getRoomId());
     }
-    
+
 }

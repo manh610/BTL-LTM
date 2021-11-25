@@ -91,8 +91,13 @@ public class UserController {
         send(request);
     }
 
-//    public void leaveRoom() {
-//        String line = ActionFlags.LEAVE_ROOM + ";null";
-//        send(line);
-//    }
+    public void updateRoom(Room room){
+        Request request = new Request(ActionFlags.UPDATE_ROOM, room);
+        send(request);
+    }
+    
+    public void leaveRoom(UserRoom userRoom){
+        Request request = new Request(ActionFlags.LEAVE_ROOM, userRoom);
+        send(request);
+    }
 }

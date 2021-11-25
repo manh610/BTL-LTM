@@ -310,7 +310,6 @@ public class HomeCenter extends javax.swing.JFrame implements Observer {
         }
         if (!opened) {
             client.userController.listRoomOpened.add(room.getId());
-            System.out.println(client.userController.listRoomOpened.size());
             RoomChat roomChat = new RoomChat(client, room, user);
             roomChat.setVisible(true);
         }

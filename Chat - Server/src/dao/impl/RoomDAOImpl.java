@@ -56,11 +56,6 @@ public class RoomDAOImpl extends DAO implements RoomDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
-            try {
-                super.disconnect();
-            } catch (SQLException ex) {
-                Logger.getLogger(UserRoomDAOImpl.class.getName()).log(Level.SEVERE, null, ex);
-            }
             return listRoom;
         }
     }
@@ -116,14 +111,30 @@ public class RoomDAOImpl extends DAO implements RoomDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
-            try {
-                super.disconnect();
-            } catch (SQLException ex) {
-                Logger.getLogger(UserRoomDAOImpl.class.getName()).log(Level.SEVERE, null, ex);
-            }
             return room;
         }
         
+    }
+
+    @Override
+    public boolean updateRoom(Room room) {
+        String sql = "UPDATE Room set "
+                + "Description = ?,"
+                + "Type = ?"
+                + "Where ID = ?";
+        boolean flag = false;
+        try {
+            super.connect();
+            PreparedStatement statement = jdbcConnection.prepareStatement(sql);
+            statement.setString(1, room.getDescription());
+            statement.setString(2, room.getType());
+            statement.setInt(3, room.getId());
+            flag = statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            return flag;
+        }
     }
 
 }
