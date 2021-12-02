@@ -266,6 +266,7 @@ public class HomeCenter extends javax.swing.JFrame implements Observer {
         }
         txtRoomName.setText("");
         Room room = new Room();
+        room.setType("public");
         room.setDescription(roomName);
         client.userController.createRoom(room);
     }//GEN-LAST:event_btnCreateRoomActionPerformed

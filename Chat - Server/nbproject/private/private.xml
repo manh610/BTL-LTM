@@ -3,8 +3,16 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/DUC/Desktop/Nam4/LTM/BTL/BTL-LTM/Chat%20-%20Server/src/controller/UserWorker.java</file>
+            <file>file:/C:/Users/DUC/Desktop/Nam4/LTM/BTL/BTL-LTM/Chat%20-%20Server/src/dao/RoomDAO.java</file>
+            <file>file:/C:/Users/DUC/Desktop/Nam4/LTM/BTL/BTL-LTM/Chat%20-%20Server/src/dao/UserDAO.java</file>
+            <file>file:/C:/Users/DUC/Desktop/Nam4/LTM/BTL/BTL-LTM/Chat%20-%20Server/src/controller/ServerWorker.java</file>
+            <file>file:/C:/Users/DUC/Desktop/Nam4/LTM/BTL/BTL-LTM/Chat%20-%20Server/src/dao/impl/UserRoomDAOImpl.java</file>
+            <file>file:/C:/Users/DUC/Desktop/Nam4/LTM/BTL/BTL-LTM/Chat%20-%20Server/src/dao/UserRoomDAO.java</file>
+            <file>file:/C:/Users/DUC/Desktop/Nam4/LTM/BTL/BTL-LTM/Chat%20-%20Server/src/dao/impl/UserDAOImpl.java</file>
+            <file>file:/C:/Users/DUC/Desktop/Nam4/LTM/BTL/BTL-LTM/Chat%20-%20Server/src/entity/Response.java</file>
+            <file>file:/C:/Users/DUC/Desktop/Nam4/LTM/BTL/BTL-LTM/Chat%20-%20Server/src/dao/impl/RoomDAOImpl.java</file>
             <file>file:/C:/Users/DUC/Desktop/Nam4/LTM/BTL/BTL-LTM/Chat%20-%20Server/src/core/Server.java</file>
+            <file>file:/C:/Users/DUC/Desktop/Nam4/LTM/BTL/BTL-LTM/Chat%20-%20Server/src/entity/Request.java</file>
         </group>
     </open-files>
 </project-private>

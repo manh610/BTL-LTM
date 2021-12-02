@@ -33,7 +33,7 @@ import java.util.List;
  *
  * @author DUC
  */
-public class UserWorker {
+public class ServerWorker {
 
     public ObjectOutputStream objectOutputStream;
     public ObjectInputStream objectInputStream;
@@ -44,7 +44,7 @@ public class UserWorker {
     public Socket socket;
     public User userc;
 
-    public UserWorker(Socket socket) throws SQLException, IOException {
+    public ServerWorker(Socket socket) throws SQLException, IOException {
         this.socket = socket;
         this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
         this.objectInputStream = new ObjectInputStream(socket.getInputStream());

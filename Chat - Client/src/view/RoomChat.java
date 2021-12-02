@@ -291,6 +291,7 @@ public class RoomChat extends javax.swing.JFrame implements Observer {
     private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
         // TODO add your handling code here:
 //        this.setTitle("Nickname: " + user.getDisplayName() + " Tên phòng: " + room.getDescription() + " Số người: " + room.getListUserRoom().size());
+        lbRoomName.setText("Room name: " + room.getDescription());
         FillMessages(room);
         FillListUser(room);
     }//GEN-LAST:event_formWindowOpened

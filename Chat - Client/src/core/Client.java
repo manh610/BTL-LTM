@@ -1,6 +1,5 @@
 package core;
 
-import controller.HomeController;
 import controller.UserController;
 import entity.Response;
 import flag.ActionFlags;
@@ -24,7 +23,6 @@ public class Client extends Observable {
     private ObjectOutputStream objectOutputStream;
     private ObjectInputStream objectInputStream;
     public UserController userController;
-    public HomeController homeController;
     private Thread thread;
 
     public Client(Observer obs) throws UnknownHostException {
@@ -32,10 +30,6 @@ public class Client extends Observable {
         System.out.println(InetAddress.getLocalHost().getHostAddress());
     }
 
-    public Client(Socket socket, Observer obs) {
-        this.addObserver(obs);
-        this.socket = socket;
-    }
 
     public void dispose() {
         if (socket != null) {
@@ -57,7 +51,6 @@ public class Client extends Observable {
             objectInputStream = new ObjectInputStream(socket.getInputStream());
             objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             userController = new UserController(objectOutputStream);
-            homeController = new HomeController(objectOutputStream);
             startThreadWaitResult();
             return true;
         } catch (IOException ex) {

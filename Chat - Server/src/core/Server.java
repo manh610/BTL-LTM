@@ -5,7 +5,7 @@
  */
 package core;
 
-import controller.UserWorker;
+import controller.ServerWorker;
 import entity.Message;
 import entity.Request;
 import entity.Room;
@@ -28,7 +28,7 @@ import java.util.logging.Logger;
 public class Server {
 
     private static final int port = 11000;
-    private static final List<UserWorker> userWorkers = new ArrayList<>();
+    private static final List<ServerWorker> serverWorkers = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
         ServerSocket serverSocket = new ServerSocket(port);
@@ -45,7 +45,7 @@ public class Server {
     private static class Handler extends Thread {
 
         private Socket socket;
-        private UserWorker userWorker;
+        private ServerWorker serverWorker;
 
         public Handler(Socket socket) {
             this.socket = socket;
@@ -54,26 +54,21 @@ public class Server {
         @Override
         public void run() {
             try {
-                userWorker = new UserWorker(socket);
-                userWorkers.add(userWorker);
-                System.out.println(socket.getLocalAddress() + " da ket noi" + userWorkers.size());
+                serverWorker = new ServerWorker(socket);
+                serverWorkers.add(serverWorker);
+                System.out.println(socket.getLocalAddress() + " da ket noi" + serverWorkers.size());
 
                 while (true) {
-                    if (userWorker.objectInputStream != null) {
-                        System.out.println("User size" + userWorkers.size());
-                        checkRequest(userWorker);
-                    } else {
-                        break;
-                    }
-
+                    System.out.println("User size" + serverWorkers.size());
+                    checkRequest(serverWorker);
                 }
             } catch (IOException ex) {
                 ex.printStackTrace();
             } catch (SQLException | ClassNotFoundException ex) {
                 Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
             } finally {
-                userWorker.logout();
-                userWorkers.remove(userWorker);
+                serverWorker.logout();
+                serverWorkers.remove(serverWorker);
                 try {
                     socket.close();
                 } catch (IOException e) {
@@ -81,34 +76,34 @@ public class Server {
             }
         }
 
-        private static void checkRequest(UserWorker uc) throws ClassNotFoundException, IOException {
+        private static void checkRequest(ServerWorker uc) throws ClassNotFoundException, IOException {
             Request request = (Request) uc.objectInputStream.readObject();
             processRequest(uc, request);
         }
 
-        private static void processRequest(UserWorker userWorker, Request request) throws IOException {
+        private static void processRequest(ServerWorker serverWorker, Request request) throws IOException {
             String actionType = request.getActionType();
-//            System.out.println(userWorker.userc.getUsername() + " " + actionType + " ");
+//            System.out.println(serverWorker.userc.getUsername() + " " + actionType + " ");
             switch (actionType) {
                 case ActionFlags.LOGIN: {
                     User user = (User) request.getEntity();
-                    userWorker.checkLogin(user.getUsername(), user.getPassword(), actionType);
-                    userWorker.getListRoomByUser();
+                    serverWorker.checkLogin(user.getUsername(), user.getPassword(), actionType);
+                    serverWorker.getListRoomByUser();
                     sendListUserHome();
                     break;
                 }
                 case ActionFlags.REGISTER: {
                     User objUser = (User) request.getEntity();
-                    userWorker.checkRegister(objUser, actionType);
+                    serverWorker.checkRegister(objUser, actionType);
                     break;
                 }
                 case ActionFlags.LOGOUT: {
-                    userWorker.logout();
-                    userWorker.objectInputStream = null;
-                    userWorker.objectOutputStream = null;
-                    if (userWorkers.remove(userWorker)) {
+                    serverWorker.logout();
+                    serverWorker.objectInputStream = null;
+                    serverWorker.objectOutputStream = null;
+                    if (serverWorkers.remove(serverWorker)) {
                         sendListUserHome();
-                        List<Room> listRoom = userWorker.getListRoomByUser();
+                        List<Room> listRoom = serverWorker.getListRoomByUser();
                         if (listRoom != null) {
                             listRoom.forEach(room -> {
                                 sendListUserRoom(room);
@@ -119,12 +114,12 @@ public class Server {
                 }
 
                 case ActionFlags.GET_ALL_USER: {
-                    userWorker.sendListUserHome();
+                    serverWorker.sendListUserHome();
                     break;
                 }
                 case ActionFlags.UPDATE_ROOM: {
                     Room room = (Room) request.getEntity();
-                    Room roomUpdated = userWorker.updateRoom(room);
+                    Room roomUpdated = serverWorker.updateRoom(room);
                     if (roomUpdated != null) {
                         updateListRoomByUser(roomUpdated);
                     }
@@ -133,7 +128,7 @@ public class Server {
 
                 case ActionFlags.ADD_USER_TO_ROOM: {
                     UserRoom userRoom = (UserRoom) request.getEntity();
-                    Room room = userWorker.addUserToRoom(userRoom);
+                    Room room = serverWorker.addUserToRoom(userRoom);
                     if (room != null) {
                         updateListRoomByUser(room);
                     }
@@ -142,13 +137,13 @@ public class Server {
 
                 case ActionFlags.CREATE_ROOM: {
                     Room room = (Room) request.getEntity();
-                    userWorker.createRoomByUser(room, actionType);
+                    serverWorker.createRoomByUser(room, actionType);
                     break;
                 }
 
                 case ActionFlags.LEAVE_ROOM: {
                     UserRoom userRoom = (UserRoom) request.getEntity();
-                    Room room = userWorker.LeaveRoom(userRoom, actionType);
+                    Room room = serverWorker.LeaveRoom(userRoom, actionType);
                     if (room != null) {
                         sendListUserRoom(room);
                         updateListRoomByUser(room);
@@ -157,20 +152,20 @@ public class Server {
                 }
                 case ActionFlags.CREATE_OR_JOIN_PRIVATE_ROOM: {
                     User user = (User) request.getEntity();
-                    Room room = userWorker.checkExistsPrivateRoom(user);
+                    Room room = serverWorker.checkExistsPrivateRoom(user);
                     if (room != null) {
                         // open view chat
-                        userWorker.openRoomChat(room, ActionFlags.OPEN_ROOM_CHAT);
-                        userWorker.getListRoomByUser();
+                        serverWorker.openRoomChat(room, ActionFlags.OPEN_ROOM_CHAT);
+                        serverWorker.getListRoomByUser();
                     }
                     break;
                 }
 
                 case ActionFlags.SEND_MESSAGE: {
                     Message message = (Message) request.getEntity();
-                    message = userWorker.createMessage(message);
+                    message = serverWorker.createMessage(message);
                     if (message != null) {
-                        Room room = userWorker.getRoom(message.getRoomId());
+                        Room room = serverWorker.getRoom(message.getRoomId());
                         if (room != null) {
                             sendMessageToAllUserInRoom(room, message);
                         }
@@ -181,24 +176,24 @@ public class Server {
         }
 
         private static void sendListUserHome() {
-            for (int i = 0; i < userWorkers.size(); i++) {
-                UserWorker uc = userWorkers.get(i);
+            for (int i = 0; i < serverWorkers.size(); i++) {
+                ServerWorker uc = serverWorkers.get(i);
                 uc.sendListUserHome();
                 System.out.println("Gui danh sach user cho user " + i);
             }
         }
 
         private static void sendListUserRoom(Room room) {
-            for (int i = 0; i < userWorkers.size(); i++) {
-                UserWorker uc = userWorkers.get(i);
+            for (int i = 0; i < serverWorkers.size(); i++) {
+                ServerWorker uc = serverWorkers.get(i);
                 uc.sendListUserRoom(room);
             }
         }
 
         private static void updateListRoomByUser(Room room) {
             for (UserRoom userRoom : room.getListUserRoom()) {
-                for (int i = 0; i < userWorkers.size(); i++) {
-                    UserWorker uc = userWorkers.get(i);
+                for (int i = 0; i < serverWorkers.size(); i++) {
+                    ServerWorker uc = serverWorkers.get(i);
                     if (uc.userc.getId() == userRoom.getUser().getId()) {
                         uc.getListRoomByUser();
                     }
@@ -209,8 +204,8 @@ public class Server {
         private static void sendMessageToAllUserInRoom(Room room, Message message) {
 
             for (UserRoom userRoom : room.getListUserRoom()) {
-                for (int i = 0; i < userWorkers.size(); i++) {
-                    UserWorker uc = userWorkers.get(i);
+                for (int i = 0; i < serverWorkers.size(); i++) {
+                    ServerWorker uc = serverWorkers.get(i);
                     if (uc.userc.getId() == userRoom.getUser().getId()) {
                         uc.openRoomChat(room, ActionFlags.OPEN_ROOM_CHAT);
                         uc.sendMessage(message, ActionFlags.SEND_MESSAGE);
